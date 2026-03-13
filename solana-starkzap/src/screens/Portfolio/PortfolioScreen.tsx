@@ -36,9 +36,12 @@ const EXPLORE_TOKENS = [
 ];
 
 const SUSN_LOCAL_ICON = require('@/assets/images/susn.png');
+const WBTC_LOCAL_ICON = require('@/assets/images/wbtc-logo.avif');
 
 const LOCAL_LOCKED_ICONS: Record<string, any> = {
   sUSN: SUSN_LOCAL_ICON,
+  WBTC: WBTC_LOCAL_ICON,
+  LBTC: WBTC_LOCAL_ICON,
 };
 
 const LOCKED_TOKEN_ICONS: Record<string, string> = {
@@ -51,6 +54,7 @@ const LOCKED_TOKEN_ICONS: Record<string, string> = {
   wstETH: 'https://assets.coingecko.com/coins/images/18834/small/wstETH.png',
   sUSN: 'https://assets.coingecko.com/coins/images/36614/small/susn.png',
   LBTC: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh/logo.png',
+  STRK: 'https://coin-images.coingecko.com/coins/images/26433/large/starknet.png',
 };
 
 interface EnrichedToken {

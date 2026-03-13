@@ -1,123 +1,81 @@
-<div align="center">
+ # Solana StarkZap
 
-# Solana App Kit
+Mobile app for Solana ↔ Starknet users, built on Expo + React Native. The app focuses on embedded wallets, swaps, and cross-chain staking flows (BTC, STRK), with a companion backend server for data and transaction helpers.
 
-### Open-Source React Native Scaffold for Building iOS and Android Crypto Mobile Apps with Solana Protocols.
+**Repo layout**
+- App (Expo + React Native): `/Users/starkience/solana-starkzap/solana-starkzap`
+- Server (Express + TypeScript): `/Users/starkience/solana-starkzap/solana-starkzap/server`
 
-<p> From AI to Social, Launchpads to Wallets, and Trading — build mobile apps in under 15 minutes. </p>
+**Key features**
+- Embedded wallet providers: Privy, Dynamic, Turnkey
+- Solana swaps and launchpads: Jupiter, Pump, Raydium, Meteora
+- Starknet flows: Starkzap staking, AVNU swaps, Vesu lending
+- Cross-chain staking flows (Solana → Starknet)
+- Portfolio, Earn, Trade, and social UI sections
 
-![SolanaAppKit](https://github.com/user-attachments/assets/b4a6dbbd-1073-412a-a5b9-4c2e41e39964)
+**Tech stack**
+- Expo, React Native, TypeScript
+- Solana Web3.js
+- Starknet + Starkzap
+- Redux Toolkit + Redux Persist
+- Express + PostgreSQL (server)
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/start-solana-app?activeTab=readme"><img src="https://img.shields.io/npm/dm/start-solana-app?style=for-the-badge&color=4CAF50" alt="NPM Downloads" /></a>
-  <a href="https://github.com/SendArcade/solana-app-kit/network/members"><img src="https://img.shields.io/github/forks/sendarcade/solana-app-kit?style=for-the-badge&color=blue" alt="GitHub Forks" /></a>
-  <a href="https://github.com/SendArcade/solana-app-kit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/sendarcade/solana-app-kit?style=for-the-badge&color=orange" alt="GitHub License" /></a>
-</p>
+**Prerequisites**
+- Node.js `>=18`
+- `pnpm` (recommended)
+- iOS: Xcode + CocoaPods
+- Android: Android Studio + SDK
 
-<p align="center">
-  <a href="https://deepwiki.com/SendArcade/solana-app-kit"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki" /></a>
-  <a href="https://x.com/solanaappkit"><img src="https://img.shields.io/twitter/follow/solanaappkit?style=flat&color=1DA1F2" alt="X (formerly Twitter) Follow" /></a>
-</p>
-
-<p> Anyone — whether a seasoned React Native developer or a Solana developer — can build mobile apps faster with 19+ protocol integrations. </div>
-
-## Key Protocol Integrations
-
-1. **Swaps:**  
-   In-App trading via [Jupiter](https://jup.ag/) for the best prices across all DEXs, and native [Pump AMM](https://swap.pump.fun/)
-
-2. **Launchpads:**  
-   The three biggest Solana launchpads with configurable bonding curves – [Pump.fun](https://pump.fun/), [Raydium](https://raydium.io/launchpad/), and [Meteora](https://app.meteora.ag/) – along with [Token Mill](https://tokenmill.xyz/)
-
-3. **Embedded Wallets:**  
-   Top wallets like [Privy](https://www.privy.io/), [Turnkey](https://turnkey.com/), and [Dynamic](https://www.dynamic.xyz/), along with Mobile Wallet Adapter support by [Solana Mobile](https://solanamobile.com/) for external wallet connections.
-
-4. **Token Data & Prices:**  
-   Live prices and token info from [Coingecko](https://www.coingecko.com/), [Birdeye](https://birdeye.so/), and [Rugcheck](https://rugcheck.xyz/)
-
-5. **NFTs:**  
-   NFT minting via [Metaplex](https://www.metaplex.com/) and trading via [Tensor](https://www.tensor.trade/)
-
-6. **AI Integration:**  
-   [SendAI](https://sendai.fun/) for AI chat integration to take Solana actions
-
-7. **On/Off-Ramps:**  
-   Buy/sell crypto using cards or Apple Pay with [MoonPay](https://www.moonpay.com/) and [Mercuryo](https://mercuryo.io/) *(work in progress)*
-
-8. **Miscellaneous Tools:**  
-   [Jito Bundles](https://www.jito.network/) and [Helius](https://www.helius.dev/) for transaction landing
-
----
-
-## 📋 Detailed Table of Contents
-
-- [📱 App Features](#-app-features)
-- [📚 Documentation](#-documentation)
-- [📦 Core Installation](#-core-installation)
-- [🛠️ Tech Stack](#️-tech-stack)
-- [✅ Prerequisites](#-prerequisites)
-- [🚀 Quick Start](#-quick-start)
-- [⌨️ Hotkeys](#️-hotkeys)
-- [🧪 Development Mode Guide](#-development-mode-guide)
-- [🏁 Getting Started](#-getting-started)
-- [📂 Project Structure](#-project-structure)
-- [🧩 Modules](#-modules)
-- [📊 Examples](#-examples)
-- [🚢 Production Deployment](#-production-deployment)
-- [📚 Dependencies](#-dependencies)
-- [🤝 Contributing](#-contributing)
-- [👥 Contributors](#-contributors)
-- [📄 License](#-license)
-- [❓ Troubleshooting](#-troubleshooting)
-- [🔒 Security](#-security)
-- [🌐 Community](#-community)
-
----
-
-## 📱 App Features
-
-| Feature                   | Description                                                                                                                                                                                                                                                                   |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 👛 **Wallet Integration** | • Multiple wallet connection methods<br>• Embedded wallet support via Privy, Dynamic, and Turnkey<br>• External wallet connections via Solana Mobile MWA<br>• Transaction signing and management<br>                                                                          |
-| 👥 **Social Features**    | • User profiles and following system<br>• Social feed with posts and interactions<br>• Community engagement features<br>• NFT display and management<br>• IPFS storage for metadata                                                                                           |
-| 🎨 **UI/UX**              | • Modern, responsive design<br>• Tab-based navigation<br>• Interactive charts and visualizations<br>• Elegant loading states and error handling<br>• Platform-specific optimizations                                                                                          |
-| 🖥️ **Backend Features**   | • RESTful API for token operations<br>• Social data storage and retrieval<br>• Token market creation and management<br>• Token swapping via Jupiter and PumpSwap<br>• Token launching via different launchpads like Pump, Raydium, and Meteora <br>• Image upload and storage |
-
----
-
-## 📚 Documentation
-
-You can view the full documentation of the kit at: [http://docs.solanaappkit.com/](http://docs.solanaappkit.com/)
-
----
-
-## 📦 Core Installation
-
+**Install**
 ```sh
-npx start-solana-app
+pnpm install
 ```
 
----
+**Run the app**
+```sh
+pnpm start
+```
 
-## 🛠️ Tech Stack
+Standard dev mode with developer tools:
+```sh
+pnpm start --dev
+```
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><a href="https://reactnative.dev/" target="_blank" rel="noopener noreferrer"><img src="https://d33wubrfki0l68.cloudfront.net/554c3b0e09cf167f0281fda839a5433f2040b349/ecfc9/img/header_logo.svg" width="60" height="60" alt="React Native" /><br /><b>React Native</b></a></td>
-      <td align="center"><a href="https://expo.dev/" target="_blank" rel="noopener noreferrer"><img src="https://www.vectorlogo.zone/logos/expoio/expoio-icon.svg" width="60" height="60" alt="Expo" /><br /><b>Expo</b></a></td>
-      <td align="center"><a href="https://solana.com/docs/clients/javascript" target="_blank" rel="noopener noreferrer"><img src="https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png" width="60" height="60" alt="Solana Web3.js" /><br /><b>Solana Kit</b></a></td>
-      <td align="center"><a href="https://www.typescriptlang.org/" target="_blank" rel="noopener noreferrer"><img src="https://cdn.worldvectorlogo.com/logos/typescript.svg" width="60" height="60" alt="TypeScript" /><br /><b>TypeScript</b></a></td>
-      <td align="center"><a href="https://www.postgresql.org/" target="_blank" rel="noopener noreferrer"><img src="https://cdn.worldvectorlogo.com/logos/postgresql.svg" width="60" height="60" alt="PostgreSQL" /><br /><b>PostgreSQL</b></a></td>
-    </tr>
-  </table>
-</div>
+**Run on device**
+```sh
+npx expo run:ios
+npx expo run:android
+```
 
----
+**Scripts**
+- `pnpm start` — start Expo
+- `pnpm dev` — start Expo with dev tools
+- `pnpm lint` — run ESLint
+- `pnpm docs:generate` — generate typedoc
+- `pnpm docs:convert` — convert docs to Mintlify
+- `pnpm check-env` — validate env config
 
-## ✅ Prerequisites
+**Server**
+```sh
+cd /Users/starkience/solana-starkzap/solana-starkzap/server
+pnpm install
+pnpm dev
+```
 
-- Node.js >= 18
+Server README: `/Users/starkience/solana-starkzap/solana-starkzap/server/README.md`
+
+**Environment**
+Create `.env` / `.env.local` values for API keys and provider configs. The app and server both read `SERVER_URL` and provider keys from `@env`.
+
+**Project structure**
+- `src/modules` — protocol integrations (pump-fun, raydium, meteora, starknet, swap, token-mill, etc.)
+- `src/screens` — app screens (Earn, Portfolio, Trade, etc.)
+- `src/core` — shared UI and dev tooling
+- `src/shared` — navigation, state, utils
+
+**Notes**
+- Starknet wallet identity is derived server-side from the Solana address.
+- Dev/standard modes toggle additional UI and diagnostics.
 - pnpm or yarn or npm
 - iOS: XCode and CocoaPods
 - Android: Android Studio, Android SDK, and JDK
