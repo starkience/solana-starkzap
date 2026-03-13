@@ -130,7 +130,7 @@ const BASE_YIELD_POOLS: YieldPool[] = [
 
 const BASE_STAKING_OPTIONS: StakingOption[] = [
   {id: 'btc', name: 'Stake BTC', token: 'WBTC', apy: 0, staked: '-', lockPeriod: '7 days', minStake: 'No minimum', tvlToken: '-'},
-  {id: 'strk', name: 'Stake STRK', token: 'STRK', apy: 0, staked: '-', lockPeriod: '21 days', minStake: 'No minimum', tvlToken: '-'},
+  {id: 'strk', name: 'Stake STRK', token: 'STRK', apy: 0, staked: '-', lockPeriod: '7 days', minStake: 'No minimum', tvlToken: '-'},
   {id: '1', name: 'Stake JUP', token: 'JUP', apy: 8.5, staked: '$234M', lockPeriod: 'Flexible', minStake: '1 JUP', tvlToken: '234M JUP'},
   {id: '2', name: 'Liquid Stake SOL', token: 'SOL', apy: 7.2, staked: '$1.8B', lockPeriod: 'Flexible', minStake: '0.01 SOL', tvlToken: '8.2M SOL'},
   {id: '3', name: 'Stake JTO', token: 'JTO', apy: 6.8, staked: '$89M', lockPeriod: '30 days', minStake: '10 JTO', tvlToken: '89M JTO'},
@@ -162,6 +162,7 @@ export default function EarnScreen() {
   const [selectedStrkDepositToken, setSelectedStrkDepositToken] = useState<string>('USDC');
   const [strkLifecycleSteps, setStrkLifecycleSteps] = useState<LifecycleStep[]>([]);
   const [strkApyData, setStrkApyData] = useState<{apy: number; tvlUsd: number; project: string} | null>(null);
+  const [starknetTokenBalances, setStarknetTokenBalances] = useState<Record<string, string | null>>({});
 
   const stakingPositions = useSelector(
     (state: RootState) => state.starknet.stakingPositions,
@@ -179,6 +180,15 @@ export default function EarnScreen() {
   const {ensureWallet, starknetAddress} = useStarknetWallet();
   const {bridgeAndDeposit, lifecycleSteps: bridgeLifecycleSteps, reset: resetBridge} = useBridgeAndDeposit();
 
+  const resolveStakingApy = useCallback(
+    (token: string): number | null => {
+      if (token === 'WBTC' && lbtcApyData?.apy) return lbtcApyData.apy;
+      if (token === 'STRK' && strkApyData?.apy) return strkApyData.apy;
+      return null;
+    },
+    [lbtcApyData, strkApyData],
+  );
+
   useEffect(() => {
     const deposits = historyTransactions.filter(
       tx => tx.status === 'confirmed' && (tx.type === 'deposit' || tx.type === 'stake'),
@@ -191,11 +201,12 @@ export default function EarnScreen() {
       if (!positionMap[token]) {
         const pool = yieldPools.find(p => p.token1 === token);
         const staking = BASE_STAKING_OPTIONS.find(s => s.token === token);
+        const stakingApyOverride = resolveStakingApy(token);
         positionMap[token] = {
           token,
           amount: 0,
           usdValue: 0,
-          apy: pool?.apy || staking?.apy || 0,
+          apy: pool?.apy ?? stakingApyOverride ?? staking?.apy ?? 0,
           protocol: tx.protocol || pool?.protocol || 'Unknown',
         };
       }
@@ -212,8 +223,14 @@ export default function EarnScreen() {
       }
       positionMap[token].usdValue += usdVal;
     }
+
+    if (positionMap.wstETH && Object.prototype.hasOwnProperty.call(starknetTokenBalances, 'wstETH')) {
+      const wstethOverride = parseFloat(starknetTokenBalances.wstETH || '0');
+      positionMap.wstETH.amount = wstethOverride;
+    }
+
     setEarnPositions(Object.values(positionMap));
-  }, [historyTransactions, yieldPools]);
+  }, [historyTransactions, yieldPools, resolveStakingApy, starknetTokenBalances]);
 
   useEffect(() => {
     let mounted = true;
@@ -221,7 +238,7 @@ export default function EarnScreen() {
       try {
         const [btcData, strkData] = await Promise.all([
           getLBTCStakingAPY(),
-          getSTRKStakingAPY(),
+          getSTRKStakingAPY({forceRefresh: true}),
         ]);
         if (mounted) {
           if (btcData) setLbtcApyData(btcData);
@@ -237,6 +254,36 @@ export default function EarnScreen() {
     fetchSTRKPools();
     return () => { mounted = false; };
   }, [fetchBTCPools, fetchSTRKPools]);
+
+  useEffect(() => {
+    let mounted = true;
+    const hasWstethTx = historyTransactions.some(
+      tx => tx.status === 'confirmed' && (tx.token === 'wstETH' || tx.subtitle?.includes('wstETH')),
+    );
+    if (!hasWstethTx) return;
+
+    const historyStarknetAddress =
+      historyTransactions.find(tx => tx.starknetAddress)?.starknetAddress || null;
+    const addressToUse = starknetAddress || historyStarknetAddress;
+    if (!addressToUse) return;
+
+    (async () => {
+      try {
+        const wstethBalance = await getStarknetTokenBalance(
+          STARKNET_TOKENS.wstETH,
+          addressToUse,
+          STARKNET_TOKEN_DECIMALS.wstETH,
+        );
+        if (mounted) {
+          setStarknetTokenBalances(prev => ({...prev, wstETH: wstethBalance || '0'}));
+        }
+      } catch (err) {
+        console.warn('[Earn] Failed to fetch wstETH balance:', err);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, [starknetAddress, historyTransactions]);
 
   useEffect(() => {
     let mounted = true;
@@ -1320,9 +1367,12 @@ export default function EarnScreen() {
                       <Text style={styles.positionApyText}>{pos.apy.toFixed(2)}% APR</Text>
                     </View>
                     <View style={styles.positionTokenRow}>
-                      {(LOCAL_TOKEN_ICONS[pos.token] || TOKEN_LOGOS[pos.token]) && (
+                      {(LOCAL_TOKEN_ICONS[pos.token] || TOKEN_LOGOS[pos.token] || TOKEN_LOGOS[pos.token.toUpperCase()]) && (
                         <Image
-                          source={LOCAL_TOKEN_ICONS[pos.token] || {uri: TOKEN_LOGOS[pos.token]}}
+                          source={
+                            LOCAL_TOKEN_ICONS[pos.token] ||
+                            {uri: TOKEN_LOGOS[pos.token] || TOKEN_LOGOS[pos.token.toUpperCase()]}
+                          }
                           style={styles.positionTokenIcon}
                         />
                       )}

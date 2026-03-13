@@ -1,5 +1,18 @@
 const DEFILLAMA_POOLS_API = 'https://yields.llama.fi/pools';
 
+type FetchOptions = {
+  forceRefresh?: boolean;
+};
+
+const normalizeApy = (pool: any): number => {
+  const apy = typeof pool?.apy === 'number' ? pool.apy : 0;
+  if (apy > 0) return apy;
+  const apyBase = typeof pool?.apyBase === 'number' ? pool.apyBase : 0;
+  const apyReward = typeof pool?.apyReward === 'number' ? pool.apyReward : 0;
+  const combined = apyBase + apyReward;
+  return combined > 0 ? combined : 0;
+};
+
 export interface StakingPoolYield {
   symbol: string;
   project: string;
@@ -18,8 +31,10 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
  * Fetches live BTC staking yields on Starknet from DeFiLlama.
  * Results are cached for 5 minutes.
  */
-export async function fetchBTCStakingYields(): Promise<StakingPoolYield[]> {
-  if (cachedYields && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
+export async function fetchBTCStakingYields(
+  options: FetchOptions = {},
+): Promise<StakingPoolYield[]> {
+  if (!options.forceRefresh && cachedYields && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
     return cachedYields;
   }
 
@@ -43,7 +58,7 @@ export async function fetchBTCStakingYields(): Promise<StakingPoolYield[]> {
       .map((p: any) => ({
         symbol: p.symbol,
         project: p.project,
-        apy: p.apy || 0,
+        apy: normalizeApy(p),
         apyBase: p.apyBase || 0,
         apyReward: p.apyReward,
         tvlUsd: p.tvlUsd || 0,
@@ -65,12 +80,14 @@ export async function fetchBTCStakingYields(): Promise<StakingPoolYield[]> {
  * Gets the best single-asset LBTC staking APY on Starknet.
  * Falls back to WBTC if LBTC pool not found.
  */
-export async function getLBTCStakingAPY(): Promise<{
+export async function getLBTCStakingAPY(
+  options: FetchOptions = {},
+): Promise<{
   apy: number;
   tvlUsd: number;
   project: string;
 } | null> {
-  const pools = await fetchBTCStakingYields();
+  const pools = await fetchBTCStakingYields(options);
 
   // Prefer single-asset LBTC pools (not LP pairs)
   const lbtcPool = pools.find(
@@ -94,8 +111,10 @@ export async function getLBTCStakingAPY(): Promise<{
 /**
  * Gets the highest-yield BTC pool on Starknet (any type including LP).
  */
-export async function getHighestBTCYield(): Promise<StakingPoolYield | null> {
-  const pools = await fetchBTCStakingYields();
+export async function getHighestBTCYield(
+  options: FetchOptions = {},
+): Promise<StakingPoolYield | null> {
+  const pools = await fetchBTCStakingYields(options);
   if (pools.length === 0) return null;
 
   return pools.reduce((best, pool) =>
@@ -109,8 +128,10 @@ let strkCacheTimestamp = 0;
 /**
  * Fetches live STRK staking yields on Starknet from DeFiLlama.
  */
-export async function fetchSTRKStakingYields(): Promise<StakingPoolYield[]> {
-  if (cachedStrkYields && Date.now() - strkCacheTimestamp < CACHE_TTL_MS) {
+export async function fetchSTRKStakingYields(
+  options: FetchOptions = {},
+): Promise<StakingPoolYield[]> {
+  if (!options.forceRefresh && cachedStrkYields && Date.now() - strkCacheTimestamp < CACHE_TTL_MS) {
     return cachedStrkYields;
   }
 
@@ -126,13 +147,12 @@ export async function fetchSTRKStakingYields(): Promise<StakingPoolYield[]> {
     const strkPools: StakingPoolYield[] = pools
       .filter((p: any) =>
         p.chain === 'Starknet' &&
-        p.symbol === 'STRK' &&
-        p.project?.toLowerCase().includes('starknet')
+        (p.symbol || '').toUpperCase().includes('STRK')
       )
       .map((p: any) => ({
         symbol: p.symbol,
         project: p.project,
-        apy: p.apy || 0,
+        apy: normalizeApy(p),
         apyBase: p.apyBase || 0,
         apyReward: p.apyReward,
         tvlUsd: p.tvlUsd || 0,
@@ -152,15 +172,18 @@ export async function fetchSTRKStakingYields(): Promise<StakingPoolYield[]> {
 /**
  * Gets the best STRK native staking APY on Starknet.
  */
-export async function getSTRKStakingAPY(): Promise<{
+export async function getSTRKStakingAPY(
+  options: FetchOptions = {},
+): Promise<{
   apy: number;
   tvlUsd: number;
   project: string;
 } | null> {
-  const pools = await fetchSTRKStakingYields();
-  const best = pools
-    .filter(p => p.apy > 0)
-    .sort((a, b) => b.tvlUsd - a.tvlUsd)[0];
+  const pools = await fetchSTRKStakingYields(options);
+  const eligible = pools.filter(p => p.apy > 0);
+  const singleAsset = eligible.filter(p => (p.symbol || '').toUpperCase() === 'STRK');
+  const shortlist = singleAsset.length > 0 ? singleAsset : eligible;
+  const best = shortlist.sort((a, b) => b.tvlUsd - a.tvlUsd)[0];
 
   if (best) {
     return { apy: best.apy, tvlUsd: best.tvlUsd, project: best.project };
