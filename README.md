@@ -1,6 +1,6 @@
 # Solana StarkZap
 
-**A Solana + Starknet mobile app powered by Starkzap.** One email login creates a Solana address and a Starknet address. USDC can move cross‑chain, swap on Starknet, and earn yield.
+**A Solana SuperApp with Starknet yield.** One email login creates a Solana address and a Starknet address. USDC can bridge from Solana, swap on Starknet, and earn yield via Starkzap.
 
 Solana StarkZap is built with Expo + React Native. Starkzap makes Starknet transactions feel native inside a Solana‑first app.
 
