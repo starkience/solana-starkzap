@@ -1,114 +1,206 @@
 # Solana StarkZap
 
-Solana StarkZap is a mobile app that onboards Solana users to Starknet in a single flow. It’s built with Expo + React Native and uses **Starkzap** to make Starknet transactions feel native inside a Solana‑first app.
+**A Solana + Starknet mobile app powered by Starkzap.** One email login creates a Solana address and a Starknet address. USDC can move cross‑chain, swap on Starknet, and earn yield.
 
-This README is written for developers who want to understand **how Starkzap enables cross‑chain apps** and how to replicate this architecture.
-
-**What the app does**
-1. One email login via **Privy**.
-2. The app provisions **two addresses**:
-   - A **Solana** address for Solana‑native actions.
-   - A **Starknet** address for staking, swaps, and lending.
-3. The Earn flow bridges USDC from Solana, swaps on Starknet, and then stakes or lends.
-
-**Why Starkzap**
-Starkzap is the glue that makes Starknet feel like a first‑class target inside a Solana app:
-- Wallet connection and signing on Starknet.
-- Staking pool discovery (STRK and BTC).
-- Swaps through **AVNU** with a unified API.
-- Lending via **Vesu** through Starkzap’s lending client.
-
-**Tech stack**
-- Expo, React Native, TypeScript
-- Solana Web3.js
-- Starknet + Starkzap
-- Redux Toolkit + Redux Persist
-- Express + PostgreSQL (server)
-
-**Main code paths**
-- App entry: `solana-starkzap/App.tsx`
-- Navigation: `solana-starkzap/src/shared/navigation/RootNavigator.tsx`
-- Earn flows (bridge → swap → stake/lend): `solana-starkzap/src/screens/Earn/EarnScreen.tsx`
-- Starknet wallet + staking: `solana-starkzap/src/modules/starknet`
-- AVNU swaps: `solana-starkzap/src/modules/starknet/services/avnuSwapService.ts`
-- CCTP bridge: `solana-starkzap/src/modules/bridge`
-- Vesu lending: `solana-starkzap/src/modules/starknet/services/vesuService.ts`
+Solana StarkZap is built with Expo + React Native. Starkzap makes Starknet transactions feel native inside a Solana‑first app.
 
 ---
 
-# Step‑By‑Step: How It Works
+## From Solana to Starknet with the Starkzap SDK
 
-**1) Privy login → Solana address**
-1. User logs in with email via Privy.
-2. Privy returns a **Solana embedded wallet**.
-3. The Solana address is stored in app state.
+This project is a step‑by‑step example of how to take a Solana app and add Starknet features using the [Starkzap SDK](https://github.com/keep-starknet-strange/starkzap).
+
+**The starting point:** a Solana‑native wallet app with swaps and portfolio.
+
+**The end result:** the same app, but with Starknet staking and lending flows, powered by Starkzap, AVNU, Vesu, and CCTP.
+
+Install the SDK (already included in this repo):
+
+```bash
+pnpm add starkzap
+```
+
+---
+
+## Step 1: Understand the Architecture
+
+Starkzap handles Starknet wallet connection, smart‑account interactions, swap routing, and lending. A minimal backend holds secrets (Privy App Secret, AVNU API key) and exposes wallet + signing endpoints. CCTP is used to bridge USDC from Solana to Starknet.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                              USER (Mobile)                          │
+│                                                                     │
+│  1. Email login ─────────► Privy SDK ─────► Privy Cloud              │
+│  2. Solana address ready   (embedded wallet)                         │
+│  3. Fetch Starknet wallet ───────┐                                   │
+│  4. Starkzap connect + execute ──┤                                   │
+└──────────────┬───────────────────┘                                   │
+               │                                                       │
+               │  POST /api/starknet/wallet (create + fetch)           │
+               │  POST /api/starknet/sign   (rawSign)                  │
+               ▼                                                       │
+┌─────────────────────────────────┐                                    │
+│        MINIMAL EXPRESS BACKEND  │                                    │
+│                                 │   ┌───────────────────────┐        │
+│  1. Create wallet ──────────────┼──►│   Privy Wallet API     │        │
+│  2. Sign hash ──────────────────┼──►│   (rawSign)            │        │
+└─────────────────────────────────┘   └───────────────────────┘        │
+                                                                      │
+               CCTP bridge + Starkzap actions ────────────────────────┤
+                                                 ▼                    │
+                                    ┌───────────────────────┐         │
+                                    │      STARKNET         │         │
+                                    │                       │         │
+                                    │  Vesu Lending         │         │
+                                    │  Starkzap Staking     │         │
+                                    │  AVNU Swaps           │         │
+                                    └───────────────────────┘         │
+```
+
+**In short:** users never handle keys or Starknet wallets directly. Privy handles identity and Solana, Starkzap handles Starknet interactions, and the backend safely holds secrets.
+
+```
+solana-starkzap/
+├── solana-starkzap/              # Expo + React Native app
+│   └── src/
+│       ├── screens/              # Earn, Portfolio, Trade flows
+│       ├── modules/              # starknet, bridge, swap, etc.
+│       └── shared/               # state, navigation, utils
+└── solana-starkzap/server/        # Express backend (wallet + signing)
+```
+
+---
+
+## Step 2: Add Social Login with Privy
+
+[Privy](https://www.privy.io/) gives users email login without wallet extensions. In this app, that login produces a **Solana embedded wallet**.
 
 Where to look:
 - Auth logic: `solana-starkzap/src/modules/wallet-providers`
-- Redux auth state: `solana-starkzap/src/shared/state/auth`
+- Auth state: `solana-starkzap/src/shared/state/auth`
 
-**2) Solana address → Starknet wallet**
-1. The app calls `POST /api/starknet/wallet` with the Solana address.
-2. The backend creates (or returns) a Starknet wallet **via Privy’s server SDK**.
-3. The app uses **Starkzap** to connect that wallet and derive the Starknet address.
+Setup: create a Privy app at [console.privy.io](https://console.privy.io) and set `PRIVY_APP_ID` + `PRIVY_APP_SECRET`.
+
+---
+
+## Step 3: Create a Starknet Wallet via Privy + Connect with Starkzap
+
+The app calls the backend to create or fetch a Starknet wallet linked to the Solana address. The backend uses Privy’s server SDK to create the Starknet wallet, and the app uses Starkzap to connect and sign.
+
+Short Starkzap usage (client connect):
+```ts
+// src/modules/starknet/hooks/useStarknetWallet.ts
+const wallet = await connectStarknetWallet(walletId, publicKey);
+```
 
 Where to look:
 - Client hook: `solana-starkzap/src/modules/starknet/hooks/useStarknetWallet.ts`
 - Server route: `solana-starkzap/server/src/routes/starknet/starknetWalletRoutes.ts`
 - Server wallet creation: `solana-starkzap/server/src/service/starknet/starknetWalletService.ts`
 
-**3) CCTP bridge (Solana → Starknet)**
-1. USDC is burned on Solana using CCTP.
-2. Attestation is polled.
-3. USDC is minted on Starknet.
+---
+
+## Step 4: Bridge USDC with CCTP (Solana → Starknet)
+
+Earn flows begin with a CCTP bridge:
+1. Burn USDC on Solana.
+2. Poll the attestation.
+3. Mint USDC on Starknet.
 
 Where to look:
 - CCTP flow: `solana-starkzap/src/modules/bridge/services/cctpBridgeService.ts`
 - Earn orchestration: `solana-starkzap/src/screens/Earn/EarnScreen.tsx`
 
-**4) Swap on Starknet (AVNU)**
-1. After USDC arrives, the app swaps into STRK / WBTC / wstETH.
-2. Swaps are executed through Starkzap’s `wallet.swap()` with provider = `avnu`.
+---
+
+## Step 5: Swap on Starknet via AVNU
+
+After USDC arrives, the app swaps into the target asset using Starkzap’s swap provider with AVNU.
+
+Short Starkzap usage (swap):
+```ts
+// src/modules/starknet/services/avnuSwapService.ts
+const tx = await wallet.swap({ tokenIn, tokenOut, amountIn, provider: 'avnu' });
+await tx.wait();
+```
 
 Where to look:
 - AVNU swap service: `solana-starkzap/src/modules/starknet/services/avnuSwapService.ts`
 
-**5) Stake or lend**
-- **Staking (STRK / BTC)** uses Starkzap staking pools.
-- **Lending (USDC / wstETH / sUSN)** uses Starkzap’s lending client routed to Vesu.
+---
+
+## Step 6: Route into Vesu Lending Pools
+
+Lending uses Starkzap’s lending client, routed to **Vesu** pools (USDC, wstETH, sUSN).
+
+Short Starkzap usage (lend):
+```ts
+// src/modules/starknet/services/vesuService.ts
+const lendingClient = wallet.lending();
+const tx = await lendingClient.deposit({ token, amount, poolAddress, provider: 'vesu' });
+```
+
+Where to look:
+- Vesu lending: `solana-starkzap/src/modules/starknet/services/vesuService.ts`
+- Earn UI: `solana-starkzap/src/screens/Earn/EarnScreen.tsx`
+
+---
+
+## Step 7: Staking on Starknet via Starkzap
+
+Staking flows use Starkzap staking pools for STRK and BTC.
+
+Short Starkzap usage (stake):
+```ts
+// src/modules/starknet/services/starknetService.ts
+const tx = await stakeInPool(wallet, poolAddress, amount, 'STRK');
+```
 
 Where to look:
 - Staking actions: `solana-starkzap/src/modules/starknet/services/starknetService.ts`
-- Vesu lending: `solana-starkzap/src/modules/starknet/services/vesuService.ts`
-- Earn flows: `solana-starkzap/src/screens/Earn/EarnScreen.tsx`
+- Earn flow wiring: `solana-starkzap/src/screens/Earn/EarnScreen.tsx`
 
 ---
 
-# Starknet Protocols Used (via Starkzap)
+## Summary: What Starkzap Enables
 
-- **Starkzap**: wallet connection, pool discovery, staking actions.
-- **AVNU**: Starknet swaps (USDC → STRK / WBTC / wstETH).
-- **Vesu**: lending pools (USDC, wstETH, sUSN).
-- **CCTP**: USDC bridge from Solana → Starknet.
+Starkzap enables a Solana‑first app to:
+- Connect Starknet wallets without exposing keys.
+- Swap on Starknet via AVNU.
+- Lend on Vesu.
+- Stake STRK and BTC.
+- Orchestrate everything inside a single mobile UX.
 
 ---
 
-# Run It Locally
+## Quick Start
 
-**App**
-```sh
+### Prerequisites
+- Node.js 18+
+- Privy app (App ID + Secret)
+- AVNU API key
+- Starknet RPC URL
+- CCTP configuration (Solana + Starknet)
+
+### Run Locally
+
+```bash
+# App
 cd solana-starkzap
 pnpm install
 pnpm start
-```
 
-**Server**
-```sh
+# Server (separate terminal)
 cd solana-starkzap/server
 pnpm install
 pnpm dev
 ```
 
-Full docs:
-- App README: `solana-starkzap/README.md`
-- Server README: `solana-starkzap/server/README.md`
+---
+
+## Learn More
+
+- [Starkzap SDK](https://github.com/keep-starknet-strange/starkzap)
+- [Privy Docs](https://docs.privy.io/)
+- [AVNU](https://docs.avnu.fi/)
+- [Vesu](https://vesu.xyz/)
