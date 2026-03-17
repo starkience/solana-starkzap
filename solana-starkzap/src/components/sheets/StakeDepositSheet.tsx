@@ -177,6 +177,7 @@ const StakeDepositSheet: React.FC<StakeDepositSheetProps> = ({
     }
   }, [txHash]);
 
+
   const handleClose = useCallback(() => {
     setAmount('');
     setTxStatus('idle');
@@ -331,6 +332,7 @@ const StakeDepositSheet: React.FC<StakeDepositSheetProps> = ({
             )}
           </View>
         </View>
+
 
         {/* Deposit / Withdraw tabs */}
         <View style={styles.tabRow}>
