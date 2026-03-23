@@ -69,7 +69,7 @@ const ReceiveSheet: React.FC<ReceiveSheetProps> = ({ visible, onClose }) => {
             />
           ) : (
             <View style={styles.qrPlaceholder}>
-              <Ionicons name="qr-code" size={140} color={COLORS.textSecondary} />
+              <Ionicons name="qr-code" size={140} color={COLORS.brandPrimary} />
             </View>
           )}
         </View>
@@ -108,15 +108,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   qrContainer: {
-    padding: 24,
-    backgroundColor: COLORS.white,
+    padding: 20,
+    backgroundColor: '#0A1628',
     borderRadius: 24,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
   },
   qrPlaceholder: {
     width: 200,
@@ -127,7 +124,7 @@ const styles = StyleSheet.create({
   addressText: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily,
-    color: '#1c1c1c',
+    color: COLORS.textSecondary,
     marginBottom: 28,
     letterSpacing: 0.2,
     textAlign: 'center',
@@ -147,13 +144,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    borderRadius: 9999,
-    backgroundColor: COLORS.secondaryBackground,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
   },
   actionButtonText: {
     fontSize: 15,
     fontFamily: TYPOGRAPHY.fontFamilyMedium,
-    color: COLORS.brandPrimary,
+    color: COLORS.white,
   },
   claimButton: {
     width: '100%',
@@ -165,7 +164,7 @@ const styles = StyleSheet.create({
   claimButtonText: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: COLORS.white,
+    color: '#0B1A2B',
   },
 });
 

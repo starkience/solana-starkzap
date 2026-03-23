@@ -247,8 +247,10 @@ export default function TradeScreen() {
               <View style={styles.avatarDot} />
             </LinearGradient>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Trade</Text>
-          <View style={{ width: 32 }} />
+          <View style={styles.headerIconRight}>
+            <Ionicons name="scan-outline" size={20} color={COLORS.textSecondary} />
+          </View>
+          <View style={{ width: 36 }} />
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -445,79 +447,85 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 16,
   },
-  avatarButton: { width: 32, height: 32 },
-  avatar: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  avatarButton: { width: 36, height: 36 },
+  avatar: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   avatarDot: {
-    width: 8, height: 8, borderRadius: 4, backgroundColor: '#4ADE80',
-    position: 'absolute', top: 0, right: 0, borderWidth: 1.5, borderColor: COLORS.background,
+    width: 9, height: 9, borderRadius: 5, backgroundColor: '#4ADE80',
+    position: 'absolute', bottom: 1, right: 1, borderWidth: 1.5, borderColor: COLORS.background,
   },
-  headerTitle: { fontSize: 18, fontFamily: TYPOGRAPHY.fontFamilyBold, color: '#1c1c1c' },
+  headerTitle: { fontSize: 18, fontFamily: TYPOGRAPHY.fontFamilyBold, color: COLORS.white },
+  headerIconRight: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center', alignItems: 'center',
+  },
   scrollView: { flex: 1 },
   orderTypeTabs: {
-    flexDirection: 'row', marginHorizontal: 16, backgroundColor: COLORS.secondaryBackground,
+    flexDirection: 'row', marginHorizontal: 16, backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 9999, padding: 3, marginBottom: 16,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
   orderTypeTab: { flex: 1, paddingVertical: 10, borderRadius: 9999, alignItems: 'center' },
-  orderTypeTabActive: { backgroundColor: COLORS.white },
-  orderTypeText: { fontSize: 14, color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.fontFamilyMedium },
-  orderTypeTextActive: { color: '#1c1c1c', fontFamily: TYPOGRAPHY.fontFamilyBold },
+  orderTypeTabActive: { backgroundColor: 'rgba(255,255,255,0.12)' },
+  orderTypeText: { fontSize: 13, color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.fontFamilyMedium },
+  orderTypeTextActive: { color: COLORS.white, fontFamily: TYPOGRAPHY.fontFamilyBold },
   tokenScrollView: { marginBottom: 16 },
   assetTabs: { flexDirection: 'row', paddingHorizontal: 16, gap: 8 },
   assetTab: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10,
-    borderRadius: 9999, backgroundColor: COLORS.secondaryBackground, gap: 8,
-    borderWidth: 1, borderColor: 'transparent',
+    borderRadius: 9999, backgroundColor: 'rgba(255,255,255,0.06)', gap: 8,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
-  assetTabActive: { borderColor: COLORS.brandPrimary, backgroundColor: COLORS.brandPrimaryLight },
+  assetTabActive: { borderColor: COLORS.brandPrimary, backgroundColor: 'rgba(0, 194, 176, 0.12)' },
   assetIcon: { width: 24, height: 24, borderRadius: 12 },
-  assetTabText: { fontSize: 14, color: '#1c1c1c', fontFamily: TYPOGRAPHY.fontFamilyMedium },
+  assetTabText: { fontSize: 14, color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.fontFamilyMedium },
   assetTabTextActive: { color: COLORS.brandPrimary },
   priceSection: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end',
     paddingHorizontal: 16, marginBottom: 12,
   },
   priceLeft: {},
-  priceMain: { fontSize: 28, fontFamily: TYPOGRAPHY.fontFamilyBold, color: '#1c1c1c', marginBottom: 4 },
+  priceMain: { fontSize: 30, fontFamily: TYPOGRAPHY.fontFamilyBold, color: COLORS.white, marginBottom: 4, letterSpacing: -0.5 },
   priceChangeRow: { flexDirection: 'row', gap: 8 },
   priceChange: { fontSize: 14, fontFamily: TYPOGRAPHY.fontFamilyMedium },
   priceRight: { alignItems: 'flex-end' },
   priceStatLabel: { fontSize: 12, color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.fontFamily },
   chartContainer: { marginHorizontal: 16, marginBottom: 16, position: 'relative' },
   chartPlaceholder: {
-    marginHorizontal: 16, height: 120, marginBottom: 16,
+    marginHorizontal: 16, height: 160, marginBottom: 16,
     justifyContent: 'center', alignItems: 'center',
-    backgroundColor: COLORS.secondaryBackground, borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 16,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
   },
   chartPlaceholderText: { color: COLORS.textSecondary, fontSize: 13, fontFamily: TYPOGRAPHY.fontFamily },
   chartLabel: { position: 'absolute', fontSize: 10, color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.fontFamily },
   swapCard: {
-    marginHorizontal: 16, backgroundColor: COLORS.white,
+    marginHorizontal: 16, backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 20, padding: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
   swapRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8,
   },
   tokenSelector: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: COLORS.secondaryBackground, paddingHorizontal: 12, paddingVertical: 10,
-    borderRadius: 9999,
+    backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 12, paddingVertical: 10,
+    borderRadius: 9999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)',
   },
   swapTokenIcon: { width: 24, height: 24, borderRadius: 12 },
-  swapTokenText: { fontSize: 15, fontFamily: TYPOGRAPHY.fontFamilyBold, color: '#1c1c1c' },
+  swapTokenText: { fontSize: 15, fontFamily: TYPOGRAPHY.fontFamilyBold, color: COLORS.white },
   amountInput: {
     flex: 1, textAlign: 'right', fontSize: 24, fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c', marginLeft: 16,
+    color: COLORS.white, marginLeft: 16,
   },
   swapDivider: { alignItems: 'center', paddingVertical: 4 },
   swapArrowCircle: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: COLORS.secondaryBackground, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 3, borderColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: 'rgba(255,255,255,0.14)',
   },
   outputValueContainer: { flex: 1, alignItems: 'flex-end', marginLeft: 16 },
-  outputValue: { fontSize: 24, fontFamily: TYPOGRAPHY.fontFamilyBold, color: '#1c1c1c' },
+  outputValue: { fontSize: 24, fontFamily: TYPOGRAPHY.fontFamilyBold, color: COLORS.white },
   outputUsd: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2, fontFamily: TYPOGRAPHY.fontFamily },
   providerRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
@@ -525,17 +533,17 @@ const styles = StyleSheet.create({
   },
   providerLabel: { fontSize: 12, color: COLORS.textSecondary, fontFamily: TYPOGRAPHY.fontFamily },
   providerBtn: {
-    backgroundColor: COLORS.secondaryBackground, paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 9999,
+    backgroundColor: 'rgba(0, 194, 176, 0.12)', paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 9999, borderWidth: 1, borderColor: 'rgba(0, 194, 176, 0.25)',
   },
   providerText: { fontSize: 12, color: COLORS.brandPrimary, fontFamily: TYPOGRAPHY.fontFamilyMedium },
   statusBox: {
     marginHorizontal: 16, padding: 12, borderRadius: 16, marginBottom: 12,
-    backgroundColor: COLORS.errorRed + '10', borderWidth: 1, borderColor: COLORS.errorRed + '30',
+    backgroundColor: 'rgba(239, 68, 68, 0.10)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.25)',
   },
   successBox: {
-    backgroundColor: COLORS.positiveGreen + '10',
-    borderColor: COLORS.positiveGreen + '30',
+    backgroundColor: 'rgba(34, 197, 94, 0.10)',
+    borderColor: 'rgba(34, 197, 94, 0.25)',
   },
   errorText: { color: COLORS.errorRed, fontSize: 13, fontFamily: TYPOGRAPHY.fontFamily },
   successText: { color: COLORS.positiveGreen, fontSize: 13, fontFamily: TYPOGRAPHY.fontFamilyMedium },
@@ -545,5 +553,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16, borderRadius: 9999, alignItems: 'center', marginBottom: 16,
   },
   swapButtonDisabled: { opacity: 0.6 },
-  swapButtonText: { color: COLORS.white, fontSize: 16, fontFamily: TYPOGRAPHY.fontFamilyBold },
+  swapButtonText: { color: '#0B1A2B', fontSize: 16, fontFamily: TYPOGRAPHY.fontFamilyBold },
 });

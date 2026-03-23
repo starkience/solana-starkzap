@@ -85,13 +85,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
     gap: 14,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   optionIcon: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -99,7 +104,7 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 14,
     resizeMode: 'cover',
   },
   optionText: {
@@ -109,7 +114,7 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.textPrimary,
   },
   optionSubtitle: {
     fontSize: 13,

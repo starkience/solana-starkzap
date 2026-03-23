@@ -77,9 +77,9 @@ export default function MainTabs() {
         tabBarStyle: {
           paddingTop: Platform.OS === 'android' ? 5 : 10,
           paddingBottom: Platform.OS === 'android' ? 5 : 0,
-          backgroundColor: COLORS.background,
+          backgroundColor: '#080F1A',
           borderTopWidth: 1,
-          borderTopColor: COLORS.greyBorder,
+          borderTopColor: 'rgba(255, 255, 255, 0.08)',
           position: 'absolute',
           elevation: 0,
           height: Platform.OS === 'android' ? 60 : 80,
@@ -87,9 +87,9 @@ export default function MainTabs() {
           left: 0,
           right: 0,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.04,
-          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.4,
+          shadowRadius: 12,
         },
       }}
     >

@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.secondaryBackground,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   txCard: {
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.greyBorder,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   txRow: {
     flexDirection: 'row',

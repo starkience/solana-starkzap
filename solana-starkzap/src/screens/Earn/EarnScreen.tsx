@@ -1311,7 +1311,7 @@ export default function EarnScreen() {
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.backButton}>
-            <Ionicons name="arrow-back" size={20} color="#1c1c1c" />
+            <Ionicons name="arrow-back" size={20} color={COLORS.white} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Earn</Text>
           <View style={{width: 36}} />
@@ -1530,7 +1530,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.white,
   },
   portfolioSection: {
     paddingHorizontal: 16,
@@ -1548,7 +1548,7 @@ const styles = StyleSheet.create({
   },
   portfolioCard: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -1566,14 +1566,14 @@ const styles = StyleSheet.create({
   portfolioCardValue: {
     fontSize: 22,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.white,
   },
   positionsScroll: {
     gap: 12,
     paddingRight: 16,
   },
   positionCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 16,
     padding: 14,
     width: 150,
@@ -1613,7 +1613,7 @@ const styles = StyleSheet.create({
   positionTokenName: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.white,
   },
   positionValue: {
     fontSize: 14,
@@ -1641,7 +1641,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   earnTabActive: {
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   earnTabText: {
     fontSize: 14,
@@ -1649,7 +1649,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamilyMedium,
   },
   earnTabTextActive: {
-    color: '#1c1c1c',
+    color: COLORS.white,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
   },
   content: {
@@ -1662,14 +1662,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.white,
     marginBottom: 12,
   },
   poolCard: {
     marginBottom: 12,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     padding: 16,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
@@ -1710,7 +1710,7 @@ const styles = StyleSheet.create({
   poolName: {
     fontSize: 15,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.white,
   },
   poolProtocol: {
     fontSize: 12,
@@ -1742,7 +1742,7 @@ const styles = StyleSheet.create({
   poolStatValue: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.white,
   },
   depositButton: {
     marginLeft: 'auto',
@@ -1760,7 +1760,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     padding: 16,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
@@ -1782,7 +1782,7 @@ const styles = StyleSheet.create({
   stakingName: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.white,
   },
   stakingToken: {
     fontSize: 13,
@@ -1816,7 +1816,7 @@ const styles = StyleSheet.create({
   stakingDetailValue: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: '#1c1c1c',
+    color: COLORS.white,
   },
   stakeButton: {
     backgroundColor: COLORS.brandPrimary,
