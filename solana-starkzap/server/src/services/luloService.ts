@@ -3,7 +3,7 @@ import { connection } from '../utils/solana';
 
 const LULO_API_KEY = process.env.LULO_API_KEY;
 if (!LULO_API_KEY) {
-  throw new Error("LULO_API_KEY environment variable is not set");
+  console.warn("LULO_API_KEY environment variable is not set — Lulo routes will not work");
 }
 
 const REFERRAL_WALLET = new PublicKey("FPfGD3kA8ZXWWMTZHLcFDMhVzyWhqstbgTpg1KoR7Vk4");

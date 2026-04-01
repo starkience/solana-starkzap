@@ -1,4 +1,4 @@
-import {SERVER_URL} from '@env';
+import {SERVER_URL, ALCHEMY_STARKNET_API_KEY} from '@env';
 import {
   StarkZap,
   OnboardStrategy,
@@ -14,7 +14,7 @@ const SERVER_BASE_URL = SERVER_URL || 'http://localhost:8080';
 
 let sdkInstance: StarkZap | null = null;
 
-const ALCHEMY_STARKNET_RPC = 'https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_10/REDACTED_ALCHEMY_KEY';
+const ALCHEMY_STARKNET_RPC = `https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_10/${ALCHEMY_STARKNET_API_KEY}`;
 
 export function getStarkzapSDK(network: 'mainnet' | 'sepolia' = 'mainnet'): StarkZap {
   if (!sdkInstance) {

@@ -1,8 +1,9 @@
 import {Amount, fromAddress, type WalletInterface} from 'starkzap';
 import type {Token, Address} from 'starkzap';
+import {ALCHEMY_STARKNET_API_KEY} from '@env';
 
 const VESU_API = 'https://api.vesu.xyz';
-const ALCHEMY_STARKNET_RPC = 'https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_10/REDACTED_ALCHEMY_KEY';
+const ALCHEMY_STARKNET_RPC = `https://starknet-mainnet.g.alchemy.com/starknet/version/rpc/v0_10/${ALCHEMY_STARKNET_API_KEY}`;
 const BALANCE_OF_SELECTOR = '0x2e4263afad30923c891518314c3c95dbe830a16874e8abc5777a9a20b54c76e';
 
 export interface VesuPoolAsset {

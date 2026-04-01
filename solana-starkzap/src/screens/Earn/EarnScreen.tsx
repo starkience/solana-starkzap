@@ -47,8 +47,6 @@ import {
 import {TransactionService} from '@/modules/wallet-providers/services/transaction/transactionService';
 import {getVesuPoolInfo, withdrawFromVesu, getStarknetTokenBalance} from '@/modules/starknet/services/vesuService';
 
-type EarnTab = 'Yield Pools' | 'Staking';
-
 const SUSN_ICON = require('@/assets/images/susn.png');
 
 const TOKEN_LOGOS: Record<string, string> = {
@@ -148,7 +146,6 @@ interface EarnPosition {
 export default function EarnScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const dispatch = useDispatch<AppDispatch>();
-  const [activeTab, setActiveTab] = useState<EarnTab>('Yield Pools');
   const [selectedPool, setSelectedPool] = useState<StakingOption | null>(null);
   const [selectedYieldPool, setSelectedYieldPool] = useState<YieldPool | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -1189,117 +1186,88 @@ export default function EarnScreen() {
   const renderYieldPool = (pool: YieldPool) => (
     <TouchableOpacity
       key={pool.id}
-      style={styles.poolCard}
+      style={styles.opportunityRow}
       activeOpacity={0.7}
       onPress={() => openYieldPoolSheet(pool)}>
-      <View style={styles.poolHeader}>
-        <View style={styles.poolNameRow}>
-          <View style={styles.poolTokens}>
-            {renderTokenIcon(pool.token1, 32)}
-            {pool.token2 && (
-              <View style={styles.poolTokenOverlap}>
-                {renderTokenIcon(pool.token2, 32)}
-              </View>
-            )}
+      {/* Token logo */}
+      <View style={styles.opportunityLogo}>
+        {renderTokenIcon(pool.token1, 40)}
+        {pool.token2 && (
+          <View style={styles.opportunityLogoOverlap}>
+            {renderTokenIcon(pool.token2, 24)}
           </View>
-          <View>
-            <Text style={styles.poolName}>{pool.name}</Text>
-            <Text style={styles.poolProtocol}>{pool.protocol}</Text>
-          </View>
-        </View>
-        <View style={{flexDirection: 'row', gap: 6}}>
-          {pool.chain === 'starknet' && (
-            <View style={[styles.riskBadge, {backgroundColor: '#6C5CE7' + '15'}]}>
-              <Text style={[styles.riskText, {color: '#6C5CE7'}]}>Starknet</Text>
-            </View>
-          )}
-          <View
-            style={[
-              styles.riskBadge,
-              {backgroundColor: getRiskColor(pool.risk) + '15'},
-            ]}>
-            <Text style={[styles.riskText, {color: getRiskColor(pool.risk)}]}>
-              {pool.risk}
-            </Text>
-          </View>
-        </View>
+        )}
       </View>
 
-      <View style={styles.poolStats}>
-        <View style={styles.poolStat}>
-          <Text style={styles.poolStatLabel}>APY</Text>
-          <Text style={[styles.poolStatValue, {color: COLORS.positiveGreen}]}>
-            {pool.apy.toFixed(1)}%
-          </Text>
-        </View>
-        <View style={styles.poolStat}>
-          <Text style={styles.poolStatLabel}>TVL</Text>
-          <Text style={styles.poolStatValue}>{pool.tvl}</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.depositButton}
-          onPress={() => openYieldPoolSheet(pool)}>
-          <Text style={styles.depositButtonText}>Deposit</Text>
-        </TouchableOpacity>
+      {/* Name + protocol */}
+      <View style={styles.opportunityInfo}>
+        <Text style={styles.opportunityName}>{pool.name}</Text>
+        <Text style={styles.opportunityProtocol}>{pool.protocol}</Text>
       </View>
+
+      {/* ⚡ APY */}
+      <View style={styles.opportunityApy}>
+        <Ionicons name="flash" size={13} color={COLORS.positiveGreen} />
+        <Text style={styles.opportunityApyText}>{pool.apy.toFixed(1)}%</Text>
+      </View>
+
+      {/* Deposit button */}
+      <TouchableOpacity
+        style={styles.opportunityButton}
+        activeOpacity={0.8}
+        onPress={() => openYieldPoolSheet(pool)}>
+        <Text style={styles.opportunityButtonText}>Deposit</Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
-  const renderStakingOption = (option: StakingOption) => (
-    <TouchableOpacity
-      key={option.id}
-      style={styles.stakingCard}
-      activeOpacity={0.7}
-      onPress={() => openStakeSheet(option)}>
-      <View style={styles.stakingHeader}>
-        <View style={styles.stakingNameRow}>
+  const renderStakingOption = (option: StakingOption) => {
+    const isStarkzap = option.id === 'btc' || option.id === 'strk';
+    const protocolLabel = option.id === 'btc' ? 'Starkzap · Starknet'
+      : option.id === 'strk' ? 'Starkzap · Starknet'
+      : option.id === '1' ? 'Jupiter Governance'
+      : option.id === '2' ? 'Native Staking'
+      : option.id === '3' ? 'Jito Governance'
+      : 'Pyth Governance';
+    return (
+      <TouchableOpacity
+        key={option.id}
+        style={styles.opportunityRow}
+        activeOpacity={0.7}
+        onPress={() => openStakeSheet(option)}>
+        {/* Token logo */}
+        <View style={styles.opportunityLogo}>
           {renderTokenIcon(option.token, 40)}
-          <View>
-            <Text style={styles.stakingName}>{option.name}</Text>
-            <Text style={styles.stakingToken}>
-              {option.id === 'btc' ? 'LBTC via Starkzap'
-                : option.id === 'strk' ? 'STRK via Starkzap'
-                : option.token}
-            </Text>
-          </View>
         </View>
-        <View style={styles.apyBadge}>
-          {(option.id === 'btc' || option.id === 'strk') && apyLoading ? (
+
+        {/* Name + protocol */}
+        <View style={styles.opportunityInfo}>
+          <Text style={styles.opportunityName}>{option.name}</Text>
+          <Text style={styles.opportunityProtocol}>{protocolLabel}</Text>
+        </View>
+
+        {/* ⚡ APY */}
+        <View style={styles.opportunityApy}>
+          {isStarkzap && apyLoading ? (
             <ActivityIndicator size="small" color={COLORS.positiveGreen} />
           ) : (
-            <Text style={styles.apyText}>{option.apy.toFixed(2)}% APY</Text>
+            <>
+              <Ionicons name="flash" size={13} color={COLORS.positiveGreen} />
+              <Text style={styles.opportunityApyText}>{option.apy.toFixed(1)}%</Text>
+            </>
           )}
         </View>
-      </View>
 
-      <View style={styles.stakingDetails}>
-        <View style={styles.stakingDetail}>
-          <Text style={styles.stakingDetailLabel}>Total Staked</Text>
-          <Text style={styles.stakingDetailValue}>{option.staked}</Text>
-        </View>
-        <View style={styles.stakingDetail}>
-          <Text style={styles.stakingDetailLabel}>Lock Period</Text>
-          <Text style={styles.stakingDetailValue}>{option.lockPeriod}</Text>
-        </View>
-        <View style={styles.stakingDetail}>
-          <Text style={styles.stakingDetailLabel}>Min Stake</Text>
-          <Text style={styles.stakingDetailValue}>{option.minStake}</Text>
-        </View>
-      </View>
-
-      <View style={styles.stakeButton}>
-        <Text style={styles.stakeButtonText}>Stake Now</Text>
-      </View>
-
-      {option.id === 'btc' && (
-        <View style={styles.starkzapBadgeRow}>
-          <View style={styles.starkzapBadge}>
-            <Text style={styles.starkzapBadgeText}>Powered by Starkzap</Text>
-          </View>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
+        {/* Stake button */}
+        <TouchableOpacity
+          style={styles.opportunityButton}
+          activeOpacity={0.8}
+          onPress={() => openStakeSheet(option)}>
+          <Text style={styles.opportunityButtonText}>Deposit</Text>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    );
+  };
 
   const totalDeposited = earnPositions.reduce((sum, p) => sum + p.usdValue, 0);
   const totalEarned = totalBTCRewards;
@@ -1318,21 +1286,23 @@ export default function EarnScreen() {
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* My Portfolio */}
+          {/* Header subtitle + My Portfolio */}
           <View style={styles.portfolioSection}>
             <Text style={styles.portfolioSubtitle}>
-              Passively earn yield on your assets
+              Passively earn yield using Jupiter and Starknet's Lending protocols
             </Text>
+
+            <Text style={styles.portfolioHeading}>My Portfolio</Text>
 
             <View style={styles.portfolioCards}>
               <View style={styles.portfolioCard}>
-                <Text style={styles.portfolioCardLabel}>Total Deposited</Text>
+                <Text style={styles.portfolioCardLabel}>Total deposited</Text>
                 <Text style={styles.portfolioCardValue}>
                   ${totalDeposited.toFixed(2)}
                 </Text>
               </View>
               <View style={styles.portfolioCard}>
-                <Text style={styles.portfolioCardLabel}>Total Earned</Text>
+                <Text style={styles.portfolioCardLabel}>Total earned</Text>
                 <Text style={[styles.portfolioCardValue, {color: COLORS.positiveGreen}]}>
                   ${totalEarned.toFixed(2)}
                 </Text>
@@ -1392,37 +1362,12 @@ export default function EarnScreen() {
             </View>
           )}
 
-          {/* Tab bar */}
-          <View style={styles.earnTabs}>
-            {(['Yield Pools', 'Staking'] as EarnTab[]).map(tab => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.earnTab, activeTab === tab && styles.earnTabActive]}
-                onPress={() => setActiveTab(tab)}>
-                <Text
-                  style={[
-                    styles.earnTabText,
-                    activeTab === tab && styles.earnTabTextActive,
-                  ]}>
-                  {tab}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
           {/* Earning Opportunities */}
-          {activeTab === 'Yield Pools' && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Earning Opportunities</Text>
-              {yieldPools.map(renderYieldPool)}
-            </View>
-          )}
-
-          {activeTab === 'Staking' && (
-            <View style={styles.section}>
-              {stakingOptions.map(renderStakingOption)}
-            </View>
-          )}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Earning Opportunities</Text>
+            {yieldPools.map(renderYieldPool)}
+            {stakingOptions.map(renderStakingOption)}
+          </View>
 
           <View style={{height: 40}} />
         </ScrollView>
@@ -1540,6 +1485,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textSecondary,
     fontFamily: TYPOGRAPHY.fontFamily,
+    marginBottom: 20,
+  },
+  portfolioHeading: {
+    fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+    color: COLORS.white,
     marginBottom: 12,
   },
   portfolioCards: {
@@ -1626,32 +1577,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  earnTabs: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    backgroundColor: COLORS.secondaryBackground,
-    borderRadius: 9999,
-    padding: 3,
-    marginBottom: 20,
-  },
-  earnTab: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 9999,
-    alignItems: 'center',
-  },
-  earnTabActive: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  earnTabText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    fontFamily: TYPOGRAPHY.fontFamilyMedium,
-  },
-  earnTabTextActive: {
-    color: COLORS.white,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-  },
   content: {
     flex: 1,
   },
@@ -1665,38 +1590,70 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     marginBottom: 12,
   },
-  poolCard: {
-    marginBottom: 12,
-    borderRadius: 20,
-    overflow: 'hidden',
+  /* ── Earning Opportunity row (Jupiter-style) ── */
+  opportunityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    marginBottom: 10,
   },
-  poolHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  opportunityLogo: {
+    position: 'relative',
+    width: 44,
+    height: 44,
+    marginRight: 12,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
-  poolNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  poolTokens: {
-    flexDirection: 'row',
-  },
-  poolTokenOverlap: {
-    marginLeft: -10,
+  opportunityLogoOverlap: {
+    position: 'absolute',
+    bottom: -2,
+    right: -6,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: COLORS.white,
-    borderRadius: 18,
+    borderColor: COLORS.cardBackground,
   },
+  opportunityInfo: {
+    flex: 1,
+    marginRight: 8,
+  },
+  opportunityName: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+    color: COLORS.white,
+    marginBottom: 2,
+  },
+  opportunityProtocol: {
+    fontSize: 11,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    color: COLORS.textSecondary,
+  },
+  opportunityApy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginRight: 10,
+  },
+  opportunityApyText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+    color: COLORS.positiveGreen,
+  },
+  opportunityButton: {
+    backgroundColor: COLORS.brandPrimary,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 9999,
+  },
+  opportunityButtonText: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+  },
+  /* ── Keep for position cards & misc ── */
   tokenIconPlaceholder: {
     backgroundColor: COLORS.secondaryBackground,
     justifyContent: 'center',
@@ -1706,128 +1663,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
     color: COLORS.brandPrimary,
-  },
-  poolName: {
-    fontSize: 15,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: COLORS.white,
-  },
-  poolProtocol: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    fontFamily: TYPOGRAPHY.fontFamily,
-    marginTop: 2,
-  },
-  riskBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 9999,
-  },
-  riskText: {
-    fontSize: 11,
-    fontFamily: TYPOGRAPHY.fontFamilyMedium,
-  },
-  poolStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 24,
-  },
-  poolStat: {},
-  poolStatLabel: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    fontFamily: TYPOGRAPHY.fontFamily,
-    marginBottom: 2,
-  },
-  poolStatValue: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: COLORS.white,
-  },
-  depositButton: {
-    marginLeft: 'auto',
-    backgroundColor: COLORS.brandPrimary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 9999,
-  },
-  depositButtonText: {
-    color: COLORS.white,
-    fontSize: 14,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-  },
-  stakingCard: {
-    marginBottom: 12,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  stakingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  stakingNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  stakingName: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: COLORS.white,
-  },
-  stakingToken: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontFamily: TYPOGRAPHY.fontFamily,
-    marginTop: 2,
-  },
-  apyBadge: {
-    backgroundColor: COLORS.positiveGreen + '15',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 9999,
-  },
-  apyText: {
-    color: COLORS.positiveGreen,
-    fontSize: 13,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-  },
-  stakingDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  stakingDetail: {},
-  stakingDetailLabel: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    fontFamily: TYPOGRAPHY.fontFamily,
-    marginBottom: 4,
-  },
-  stakingDetailValue: {
-    fontSize: 14,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    color: COLORS.white,
-  },
-  stakeButton: {
-    backgroundColor: COLORS.brandPrimary,
-    paddingVertical: 14,
-    borderRadius: 9999,
-    alignItems: 'center',
-  },
-  stakeButtonText: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
   },
   starkzapBadgeRow: {
     flexDirection: 'row',

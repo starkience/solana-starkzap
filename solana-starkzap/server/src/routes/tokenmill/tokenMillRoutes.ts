@@ -11,7 +11,13 @@ import {
 import { PublicKey } from '@solana/web3.js';
 
 const router = express.Router();
-const tokenMill = new TokenMillClient();
+let tokenMill: TokenMillClient | null = null;
+function getTokenMill(): TokenMillClient {
+  if (!tokenMill) {
+    tokenMill = new TokenMillClient();
+  }
+  return tokenMill;
+}
 
 /**
  * Create a new TokenMill configuration
@@ -25,7 +31,7 @@ router.post('/config', async (req: Request, res: Response) => {
       protocolFeeShare,
       referralFeeShare,
     } = req.body;
-    const result = await tokenMill.createConfig(
+    const result = await getTokenMill().createConfig(
       new PublicKey(authority),
       new PublicKey(protocolFeeRecipient),
       protocolFeeShare,
@@ -46,7 +52,7 @@ router.post('/config', async (req: Request, res: Response) => {
  */
 router.post('/quote-token-badge', async (req: Request, res: Response) => {
   try {
-    const result = await tokenMill.getTokenBadge(req.body);
+    const result = await getTokenMill().getTokenBadge(req.body);
     res.json(result);
   } catch (error) {
     res.status(500).json({
@@ -64,7 +70,7 @@ router.post(
   '/markets',
   async (req: Request<{}, {}, MarketParams>, res: Response) => {
     try {
-      const result = await tokenMill.buildCreateMarketTx(req.body);
+      const result = await getTokenMill().buildCreateMarketTx(req.body);
       res.json(result);
     } catch (error) {
       res.status(500).json({
@@ -112,7 +118,7 @@ router.post(
   '/tokens',
   async (req: Request<{}, {}, TokenParams>, res: Response) => {
     try {
-      const result = await tokenMill.createToken();
+      const result = await getTokenMill().createToken();
       res.json(result);
     } catch (error) {
       res.status(500).json({
@@ -138,7 +144,7 @@ router.post('/swap', async (req: Request, res: Response): Promise<any> => {
       otherAmountThreshold,
       userPublicKey,
     } = req.body;
-    const result = await tokenMill.buildSwapTx({
+    const result = await getTokenMill().buildSwapTx({
       market,
       quoteTokenMint,
       action,
@@ -177,7 +183,7 @@ router.post(
     res: Response,
   ) => {
     try {
-      const result = await tokenMill.buildStakeTx(req.body);
+      const result = await getTokenMill().buildStakeTx(req.body);
       res.json(result);
     } catch (error) {
       res.status(500).json({
@@ -196,7 +202,7 @@ router.post(
   '/vesting',
   async (req: Request<{}, {}, VestingParams>, res: Response) => {
     try {
-      const result = await tokenMill.buildCreateVestingTxWithAutoPositionAndATA(
+      const result = await getTokenMill().buildCreateVestingTxWithAutoPositionAndATA(
         req.body,
       );
       res.json(result);
@@ -222,7 +228,7 @@ router.post('/vesting/release', async (req: any, res: any) => {
       baseTokenMint,
       userPublicKey,
     } = req.body;
-    const result = await tokenMill.buildReleaseVestingTx({
+    const result = await getTokenMill().buildReleaseVestingTx({
       marketAddress,
       vestingPlanAddress,
       baseTokenMint,
@@ -255,7 +261,7 @@ router.post('/set-curve', async (req: Request, res: Response): Promise<any> => {
           'Missing required fields: market, userPublicKey, askPrices, bidPrices',
       });
     }
-    const result = await tokenMill.buildSetCurveTx({
+    const result = await getTokenMill().buildSetCurveTx({
       market,
       userPublicKey,
       askPrices,
@@ -285,7 +291,7 @@ router.post(
   '/quote-swap',
   async (req: Request, res: Response): Promise<any> => {
     try {
-      const result = await tokenMill.quoteSwap(req.body);
+      const result = await getTokenMill().quoteSwap(req.body);
       res.json(result);
     } catch (error) {
       res.status(500).json({
@@ -308,7 +314,7 @@ router.post(
       return res.status(400).json({ error: 'Asset ID is required' });
     }
     try {
-      const metadata = await tokenMill.getAssetMetadata(assetId);
+      const metadata = await getTokenMill().getAssetMetadata(assetId);
       res.json(metadata);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -324,7 +330,7 @@ router.get(
   '/graduation',
   async (req: Request, res: Response): Promise<any> => {
     try {
-      const result = await tokenMill.getGraduation(req.body.market);
+      const result = await getTokenMill().getGraduation(req.body.market);
       res.json(result);
     } catch (error) {
       res.status(500).json({

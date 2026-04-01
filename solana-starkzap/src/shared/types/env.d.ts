@@ -27,4 +27,5 @@ declare module '@env' {
   export const AVNU_API_KEY: string;
   export const LAYERZERO_API_KEY: string;
   export const JUPITER_API_KEY: string;
+  export const ALCHEMY_STARKNET_API_KEY: string;
 }
