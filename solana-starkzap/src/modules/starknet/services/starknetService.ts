@@ -1,4 +1,4 @@
-import {SERVER_URL, ALCHEMY_STARKNET_API_KEY} from '@env';
+import {SERVER_URL, ALCHEMY_STARKNET_API_KEY, AVNU_API_KEY} from '@env';
 import {
   StarkZap,
   OnboardStrategy,
@@ -24,7 +24,7 @@ export function getStarkzapSDK(network: 'mainnet' | 'sepolia' = 'mainnet'): Star
       paymaster: {
         nodeUrl: 'https://starknet.paymaster.avnu.fi/rpc',
         headers: {
-          'x-paymaster-api-key': 'REDACTED_AVNU_KEY',
+          'x-paymaster-api-key': AVNU_API_KEY,
         },
       },
     } as any);
