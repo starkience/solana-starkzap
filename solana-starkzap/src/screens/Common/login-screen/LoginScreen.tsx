@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Dimensions, Alert, Platform, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, Dimensions, Alert, Platform, ActivityIndicator, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
-import styles from '@/screens/Common/login-screen/LoginScreen.styles';
+import oldStyles from '@/screens/Common/login-screen/LoginScreen.styles';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/shared/hooks/useReduxHooks';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
@@ -15,9 +15,12 @@ import { useCustomization } from '@/shared/config/CustomizationProvider';
 import axios from 'axios';
 import { SERVER_URL } from '@env';
 import COLORS from '@/assets/colors';
+import TYPOGRAPHY from '@/assets/typography';
+import { Ionicons } from '@expo/vector-icons';
 import { useEnvError } from '@/shared/context/EnvErrorContext';
 import { useDevMode } from '@/shared/context/DevModeContext';
 import { generateAndStoreAvatar } from '@/shared/services/diceBearAvatarService';
+import { useAuth } from '@/modules/wallet-providers/hooks/useAuth';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -283,43 +286,247 @@ export default function LoginScreen() {
     }
   };
 
+  const auth = useAuth();
+  const [email, setEmail] = useState('');
+
+  const handleEmailLogin = async () => {
+    if (!email.trim() || !auth.loginWithEmail) return;
+    setIsAuthenticating(true);
+    try {
+      await (auth.loginWithEmail as any)(email.trim());
+    } catch (err: any) {
+      console.error('[LoginScreen] Email login error:', err);
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    if (!auth.loginWithGoogle) return;
+    setIsAuthenticating(true);
+    try {
+      await auth.loginWithGoogle();
+    } catch (err: any) {
+      console.error('[LoginScreen] Google login error:', err);
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    if (!auth.loginWithApple) return;
+    setIsAuthenticating(true);
+    try {
+      await auth.loginWithApple();
+    } catch (err: any) {
+      console.error('[LoginScreen] Apple login error:', err);
+      setIsAuthenticating(false);
+    }
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar
-        style="dark-content"
-        backgroundColor="transparent"
-        translucent={true}
-      />
-      <View style={styles.container}>
-        <View style={styles.logoContainer}>
-          <LinearGradient
-            colors={['#FE3501', '#F97316']}
-            style={styles.appLogo}
-          >
-            <View style={styles.logoInnerDot} />
-          </LinearGradient>
+    <SafeAreaView style={axalStyles.safeArea}>
+      <StatusBar style="dark" />
+
+      {/* Close button */}
+      <TouchableOpacity style={axalStyles.closeButton} onPress={() => navigation.goBack()}>
+        <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+      </TouchableOpacity>
+
+      <View style={axalStyles.container}>
+        {/* Title */}
+        <Text style={axalStyles.title}>Log in</Text>
+
+        {/* Email input */}
+        <Text style={axalStyles.inputLabel}>Email Address</Text>
+        <TextInput
+          style={axalStyles.emailInput}
+          placeholder="user@email.com"
+          placeholderTextColor="#BDBDBD"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        {/* Log In button */}
+        <TouchableOpacity style={axalStyles.loginButton} onPress={handleEmailLogin} activeOpacity={0.85}>
+          <Text style={axalStyles.loginButtonText}>Log In</Text>
+        </TouchableOpacity>
+
+        {/* OR divider */}
+        <View style={axalStyles.orRow}>
+          <View style={axalStyles.orLine} />
+          <Text style={axalStyles.orText}>OR</Text>
+          <View style={axalStyles.orLine} />
         </View>
 
-        <View style={styles.headerContainer}>
-          <Text style={styles.welcomeText}>Welcome back</Text>
-          <Text style={styles.subtitleText}>Sign in to your account</Text>
+        {/* Continue with Google */}
+        <TouchableOpacity style={axalStyles.socialButton} onPress={handleGoogleLogin} activeOpacity={0.8}>
+          <Text style={axalStyles.googleIcon}>G</Text>
+          <Text style={axalStyles.socialButtonText}>Continue with Google</Text>
+        </TouchableOpacity>
+
+        {/* Continue with Apple */}
+        <TouchableOpacity style={axalStyles.socialButton} onPress={handleAppleLogin} activeOpacity={0.8}>
+          <Ionicons name="logo-apple" size={20} color={COLORS.textPrimary} />
+          <Text style={axalStyles.socialButtonText}>Continue with Apple</Text>
+        </TouchableOpacity>
+
+        {/* New to Axal? */}
+        <View style={axalStyles.signUpRow}>
+          <Text style={axalStyles.signUpText}>New to Axal? </Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={axalStyles.signUpLink}>Sign up</Text>
+          </TouchableOpacity>
         </View>
-
-        {renderAuthComponent()}
-
-        <Text style={styles.agreementText}>
-          By continuing you agree to our t&c and Privacy Policy
-        </Text>
-
-        {isAuthenticating && (
-          <View style={styles.loadingOverlay}>
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={COLORS.brandPrimary} />
-              <Text style={styles.loadingText}>Connecting to wallet...</Text>
-            </View>
-          </View>
-        )}
       </View>
+
+      {/* Footer */}
+      <View style={axalStyles.footer}>
+        <Text style={axalStyles.footerText}>Terms of use | Privacy Policy | Help Center</Text>
+      </View>
+
+      {/* Loading overlay */}
+      {isAuthenticating && (
+        <View style={axalStyles.loadingOverlay}>
+          <ActivityIndicator size="large" color={COLORS.brandPrimary} />
+          <Text style={axalStyles.loadingText}>Connecting...</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
+
+const axalStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  closeButton: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 4,
+    alignSelf: 'flex-start',
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingTop: 16,
+  },
+  title: {
+    fontSize: 42,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: 32,
+  },
+  inputLabel: {
+    fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  emailInput: {
+    height: 54,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    color: COLORS.textPrimary,
+    marginBottom: 20,
+  },
+  loginButton: {
+    height: 54,
+    borderRadius: 9999,
+    backgroundColor: COLORS.brandPrimary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+  },
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB',
+  },
+  orText: {
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    color: COLORS.textSecondary,
+    paddingHorizontal: 16,
+  },
+  socialButton: {
+    height: 54,
+    borderRadius: 14,
+    backgroundColor: '#F0F0F0',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  googleIcon: {
+    fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+    fontWeight: '700',
+    color: '#4285F4',
+  },
+  socialButtonText: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+  },
+  signUpRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  signUpText: {
+    fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    color: COLORS.textPrimary,
+  },
+  signUpLink: {
+    fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+    textDecorationLine: 'underline',
+  },
+  footer: {
+    paddingBottom: Platform.OS === 'ios' ? 4 : 12,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  loadingText: {
+    fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    color: COLORS.textSecondary,
+    marginTop: 12,
+  },
+});

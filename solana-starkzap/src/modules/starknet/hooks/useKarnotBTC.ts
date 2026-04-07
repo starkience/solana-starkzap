@@ -5,6 +5,8 @@ import {
   setStakingPositions,
   setStakingLoading,
   setStakingError,
+  addBridgeOperation,
+  updateBridgeOperation,
   StakingPosition,
 } from '@/shared/state/starknet/reducer';
 import {
@@ -18,6 +20,9 @@ import { useStarknetWallet } from './useStarknetWallet';
 import { useBridge } from '@/modules/bridge/hooks/useBridge';
 import { useBaseWallet } from '@/modules/wallet-providers/hooks/useBaseWallet';
 import { bridgeViaRhino } from '@/modules/bridge/services/rhinoBridgeService';
+import { fetchStakingApy } from '../services/apyService';
+import { getStarknetTokenBalance } from '../services/vesuService';
+import { STARKNET_TOKENS, STARKNET_TOKEN_DECIMALS } from '../services/avnuSwapService';
 
 export interface KarnotBTCPool {
   poolContract: string;
@@ -106,31 +111,16 @@ export function useKarnotBTC() {
   }, []);
 
   /**
-   * Fetch BTC APY from the actual validator pool position data.
-   * Uses the commission percent from the pool as a proxy,
-   * combined with Starknet's native staking rewards.
+   * Fetch live BTC staking APY from DeFiLlama.
    */
   const fetchBtcApy = useCallback(async () => {
     try {
-      const wallet = await ensureWallet();
-      if (!wallet || !bestPool) {
-        setBtcApy(3.8); // Fallback when wallet/pool not ready
-        return;
-      }
-
-      const pos = await getPoolPosition(wallet, bestPool.poolContract);
-      if (pos && pos.commissionPercent !== undefined) {
-        const baseApy = 4.5;
-        const effectiveApy = baseApy * (1 - pos.commissionPercent / 100);
-        setBtcApy(Math.max(effectiveApy, 0.5));
-      } else {
-        // No existing position — use base rate estimate
-        setBtcApy(3.8);
-      }
+      const apyData = await fetchStakingApy();
+      setBtcApy(apyData.btcApy);
     } catch {
-      setBtcApy(3.8);
+      setBtcApy(2.07); // Fallback to last known rate
     }
-  }, [ensureWallet, bestPool]);
+  }, []);
 
   /**
    * Full flow: swap USDC → best BTC type → stake in Karnot.
@@ -247,6 +237,17 @@ export function useKarnotBTC() {
 
         console.log(`[KarnotBTC] Starting Arbitrum→BTC flow via Rhino.fi: ${usdcAmount} USDC`);
 
+        // Track in Redux for History screen
+        const opId = `rhino-${Date.now()}`;
+        dispatch(addBridgeOperation({
+          id: opId,
+          direction: 'arbitrum_to_starknet',
+          tokenSymbol: 'USDC',
+          amount: usdcAmount,
+          status: 'bridging',
+          createdAt: new Date().toISOString(),
+        }));
+
         // Step 1: Switch to Arbitrum and bridge via Rhino.fi
         onStatus?.('Bridging USDC from Arbitrum to Starknet...');
         const evmProvider = await getProviderForChain('arbitrum');
@@ -261,12 +262,23 @@ export function useKarnotBTC() {
         );
         console.log(`[KarnotBTC] Rhino.fi bridge complete: ${bridgeResult.txHash}`);
 
+        dispatch(updateBridgeOperation({
+          id: opId,
+          updates: { txHash: bridgeResult.txHash, status: 'completed' },
+        }));
+
         // Step 2: Swap USDC → BTC on Starknet (use actual received amount after bridge fees)
         onStatus?.('Swapping USDC to BTC...');
-        const usdcPreset = await import('../services/avnuSwapService').then(m => m.getPresetToken('USDC'));
-        const usdcBalance = await wallet.getBalance(usdcPreset);
-        const receivedUsdc = usdcBalance.toFormatted();
+        const receivedUsdc = await getStarknetTokenBalance(
+          STARKNET_TOKENS.USDC,
+          starknetAddress,
+          STARKNET_TOKEN_DECIMALS.USDC,
+        );
         console.log(`[KarnotBTC] USDC balance on Starknet after bridge: ${receivedUsdc}`);
+
+        if (parseFloat(receivedUsdc) <= 0) {
+          throw new Error('Bridge completed but no USDC found on Starknet. It may take a moment to arrive.');
+        }
 
         const swapResult = await swapPresetTokens(
           wallet,
@@ -278,9 +290,13 @@ export function useKarnotBTC() {
 
         // Step 3: Stake BTC in Karnot
         onStatus?.('Staking BTC in Karnot...');
-        const presets = await import('../services/avnuSwapService').then(m => m.getPresetToken(bestPool.tokenSymbol));
-        const balance = await wallet.getBalance(presets);
-        const btcAmount = balance.toFormatted();
+        const btcTokenAddress = (STARKNET_TOKENS as any)[bestPool.tokenSymbol] || STARKNET_TOKENS.WBTC;
+        const btcDecimals = (STARKNET_TOKEN_DECIMALS as any)[bestPool.tokenSymbol] || 8;
+        const btcAmount = await getStarknetTokenBalance(
+          btcTokenAddress,
+          starknetAddress,
+          btcDecimals,
+        );
 
         if (parseFloat(btcAmount) <= 0) {
           throw new Error('Swap completed but no BTC balance found');
@@ -296,6 +312,16 @@ export function useKarnotBTC() {
         console.log(`[KarnotBTC] Stake complete: ${stakeTxHash}`);
 
         onStatus?.('Done!');
+
+        // Update Redux with all tx hashes for History screen
+        dispatch(updateBridgeOperation({
+          id: opId,
+          updates: {
+            status: 'completed',
+            txHash: `${bridgeResult.txHash}|${swapResult.txHash}|${stakeTxHash}`,
+          },
+        }));
+
         await refreshPositions();
 
         return {

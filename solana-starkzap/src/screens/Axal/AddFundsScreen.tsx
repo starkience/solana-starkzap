@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -52,9 +53,11 @@ export default function AddFundsScreen() {
           {activeTab === 'Cash' ? (
             <TouchableOpacity style={styles.optionCard}>
               <View style={styles.optionIcon}>
-                <View style={[styles.iconCircle, { backgroundColor: '#0052FF' }]}>
-                  <Text style={styles.iconText}>C</Text>
-                </View>
+                <Image
+                  source={{ uri: 'https://cdn.worldvectorlogo.com/logos/coinbase-1.svg' }}
+                  style={styles.coinbaseLogo}
+                  defaultSource={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Coinbase_logo.svg/200px-Coinbase_logo.svg.png' }}
+                />
               </View>
               <View style={styles.optionInfo}>
                 <Text style={styles.optionTitle}>Coinbase</Text>
@@ -192,11 +195,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.greyBorder,
+    borderWidth: 0.5,
+    borderColor: '#D1D5DB',
   },
   optionIcon: {
     marginRight: 12,
+  },
+  coinbaseLogo: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   iconCircle: {
     width: 40,
@@ -225,7 +233,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   badgeGreen: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -233,7 +241,7 @@ const styles = StyleSheet.create({
   badgeGreenText: {
     fontSize: 11,
     fontFamily: TYPOGRAPHY.fontFamilyMedium,
-    color: '#2E7D32',
+    color: '#00CC30',
   },
   optionRight: {
     alignItems: 'flex-end',

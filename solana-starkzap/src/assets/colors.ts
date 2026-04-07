@@ -10,9 +10,9 @@ const COLORS = {
   surfaceBackground: '#F2F4F5',
 
   // Brand — Axal green
-  brandPrimary: '#00E676',
-  brandPrimaryLight: 'rgba(0, 230, 118, 0.12)',
-  brandPrimaryMuted: 'rgba(0, 230, 118, 0.20)',
+  brandPrimary: '#00FF3B',
+  brandPrimaryLight: 'rgba(0, 255, 59, 0.12)',
+  brandPrimaryMuted: 'rgba(0, 255, 59, 0.20)',
 
   // BTC Earn — orange accent
   btcOrange: '#FF9500',
@@ -35,15 +35,15 @@ const COLORS = {
   textDark: '#1A1A1A',
 
   // Status
-  positiveGreen: '#22C55E',
+  positiveGreen: '#00CC30',
   negativeRed: '#EF4444',
   errorRed: '#EF4444',
   warningOrange: '#F97316',
 
   // Trading — kept for compatibility
-  longGreen: '#22C55E',
+  longGreen: '#00FF3B',
   shortRed: '#EF4444',
-  longBg: 'rgba(34, 197, 94, 0.15)',
+  longBg: 'rgba(0, 255, 59, 0.15)',
   shortBg: 'rgba(239, 68, 68, 0.15)',
 
   // Legacy compatibility aliases
@@ -51,8 +51,8 @@ const COLORS = {
   brandPurpleBg: 'rgba(181, 145, 255, 0.12)',
   brandBlue: '#3B82F6',
   brandPink: '#F53987',
-  brandGreen: '#22C55E',
-  cyan: '#00E676',
+  brandGreen: '#00FF3B',
+  cyan: '#00FF3B',
   lightBackground: '#F8F9FA',
   lighterBackground: '#F2F4F5',
   darkerBackground: '#E8EAED',
@@ -64,8 +64,8 @@ const COLORS = {
   // Gradients — Axal light gradient
   gradientTealStart: '#FFFFFF',
   gradientTealEnd: '#F2F4F5',
-  gradientAccentStart: '#00E676',
-  gradientAccentEnd: '#00C853',
+  gradientAccentStart: '#00FF3B',
+  gradientAccentEnd: '#00CC30',
 };
 
 export default COLORS;

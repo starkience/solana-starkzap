@@ -1,7 +1,17 @@
+import { Platform } from 'react-native';
+
+/**
+ * Uses SF Pro (system font) on iOS, Roboto on Android.
+ * SF Pro is automatically available as 'System' on iOS.
+ */
+const SF_REGULAR = Platform.OS === 'ios' ? 'System' : 'Roboto_400Regular';
+const SF_MEDIUM = Platform.OS === 'ios' ? 'System' : 'Roboto_500Medium';
+const SF_BOLD = Platform.OS === 'ios' ? 'System' : 'Roboto_700Bold';
+
 const TYPOGRAPHY = {
-  fontFamily: 'Roboto_400Regular',
-  fontFamilyMedium: 'Roboto_500Medium',
-  fontFamilyBold: 'Roboto_700Bold',
+  fontFamily: SF_REGULAR,
+  fontFamilyMedium: SF_MEDIUM,
+  fontFamilyBold: SF_BOLD,
 
   regular: 400,
   medium: 500,

@@ -4,5 +4,11 @@
     "privy_wallet_id": "mqti53h7j9mpjkcrpp2rka6p",
     "wallet_address": "0x2fa3564a727296b2e317040203d2520ac60b679a9238908d335856c77bba180",
     "public_key": "0x7060591d3918f2bf28a87721160b953f8a0e7838afee2f73feb3734725aa3bd"
+  },
+  {
+    "user_id": "Anvvno5xfqV1AT7ygEPD5YhocVCxeaBaskKt6fq7RinC",
+    "privy_wallet_id": "yvp4u0qg035y8dnb70tm16p1",
+    "wallet_address": "0x70204865ec81420ef8490d5ef1afd4740fec5e2f180e4abc2d220c1b80ebcdb",
+    "public_key": "0x52f81e807c497a7f39af6a7717e2a90c78e8dd0bf2d5b54b95cfbeaf42a4faa"
   }
 ]

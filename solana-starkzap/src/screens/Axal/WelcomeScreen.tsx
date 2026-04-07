@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useAppNavigation } from '@/shared/hooks/useAppNavigation';
@@ -7,34 +7,9 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/shared/state/store';
 import COLORS from '@/assets/colors';
 import TYPOGRAPHY from '@/assets/typography';
-import Svg, { Rect, Polygon, G } from 'react-native-svg';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-/** Isometric 3D bar — draws a front face, top face, and right face */
-function IsoBar({ x, height, width: w, color, lightColor, darkColor }: {
-  x: number; height: number; width: number;
-  color: string; lightColor: string; darkColor: string;
-}) {
-  const topOffset = 6;
-  const sideOffset = 6;
-  const y = 180 - height;
-
-  // Front face
-  const front = `${x},${y} ${x + w},${y} ${x + w},${180} ${x},${180}`;
-  // Top face (isometric)
-  const top = `${x},${y} ${x + sideOffset},${y - topOffset} ${x + w + sideOffset},${y - topOffset} ${x + w},${y}`;
-  // Right face
-  const right = `${x + w},${y} ${x + w + sideOffset},${y - topOffset} ${x + w + sideOffset},${180 - topOffset} ${x + w},${180}`;
-
-  return (
-    <G>
-      <Polygon points={front} fill={color} />
-      <Polygon points={top} fill={lightColor} />
-      <Polygon points={right} fill={darkColor} />
-    </G>
-  );
-}
+const axalBars = require('@/assets/images/axal-bars.png');
+const axalLogo = require('@/assets/images/axal-logo.png');
 
 export default function WelcomeScreen() {
   const navigation = useAppNavigation();
@@ -46,71 +21,31 @@ export default function WelcomeScreen() {
     }
   }, [isLoggedIn]);
 
-  // Bar data — heights as percentages
-  const bars = [
-    0.30, 0.50, 0.40, 0.70, 0.45, 0.80, 0.35, 0.60, 0.90, 0.55, 0.75, 0.42,
-    0.32, 0.55, 0.48, 0.72, 0.50, 0.85, 0.38, 0.65, 0.95, 0.58, 0.78, 0.45,
-  ];
-  const barWidth = 10;
-  const barGap = 2;
-  const illustrationWidth = bars.length * (barWidth + barGap);
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
       <View style={styles.container}>
-        {/* Top section */}
+        {/* Top section — headline + logo */}
         <View style={styles.topSection}>
-          {/* Logo — Axal diamond icon (two overlapping diamonds) */}
-          <View style={styles.logoRow}>
-            <View style={styles.logoContainer}>
-              <View style={[styles.logoDiamond, styles.logoDiamondBack]} />
-              <View style={[styles.logoDiamond, styles.logoDiamondFront]} />
+          <View style={styles.headlineRow}>
+            <View>
+              <Text style={styles.headline}>Earn</Text>
+              <Text style={styles.headline}>More</Text>
             </View>
+            <Image source={axalLogo} style={styles.logo} resizeMode="contain" />
           </View>
-
-          {/* Headline */}
-          <Text style={styles.headline}>Earn</Text>
-          <Text style={styles.headline}>More</Text>
         </View>
 
-        {/* Isometric 3D bar chart illustration */}
-        <View style={styles.illustrationContainer}>
-          <Svg
-            width={illustrationWidth + 10}
-            height={200}
-            viewBox={`0 0 ${illustrationWidth + 10} 200`}
-          >
-            {/* Base platform line */}
-            <Rect x={0} y={180} width={illustrationWidth + 10} height={1} fill="#E0E0E0" />
-            {bars.map((h, i) => {
-              const barH = h * 140;
-              const shade = i % 3;
-              const colors = shade === 0
-                ? { color: '#C8E6C9', lightColor: '#E8F5E9', darkColor: '#A5D6A7' }
-                : shade === 1
-                ? { color: '#81C784', lightColor: '#C8E6C9', darkColor: '#66BB6A' }
-                : { color: '#4CAF50', lightColor: '#81C784', darkColor: '#388E3C' };
-              return (
-                <IsoBar
-                  key={i}
-                  x={i * (barWidth + barGap)}
-                  height={barH}
-                  width={barWidth}
-                  {...colors}
-                />
-              );
-            })}
-          </Svg>
+        {/* Illustration + tagline grouped together */}
+        <View style={styles.illustrationSection}>
+          <Image source={axalBars} style={styles.illustration} resizeMode="contain" />
+          <Text style={styles.tagline}>
+            <Text style={styles.taglineBold}>Earn real yield,</Text>
+            {' '}on your terms.
+          </Text>
         </View>
 
-        {/* Tagline */}
-        <Text style={styles.tagline}>
-          <Text style={styles.taglineBold}>Earn real yield,</Text>
-          {' '}on your terms.
-        </Text>
-
-        {/* Buttons */}
+        {/* Buttons — matching Add Funds / Earn style */}
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={styles.loginButton}
@@ -139,52 +74,40 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 28,
+    paddingHorizontal: 24,
     justifyContent: 'space-between',
-    paddingBottom: 36,
-    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 4 : 8,
+    paddingTop: 8,
   },
   topSection: {},
-  logoRow: {
-    alignItems: 'flex-end',
-    marginBottom: 8,
-  },
-  logoContainer: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoDiamond: {
-    position: 'absolute',
-    width: 18,
-    height: 18,
-    backgroundColor: COLORS.textPrimary,
-    transform: [{ rotate: '45deg' }],
-    borderRadius: 2,
-  },
-  logoDiamondBack: {
-    top: 6,
-    left: 6,
-    opacity: 0.3,
-  },
-  logoDiamondFront: {
-    top: 12,
-    left: 14,
-    opacity: 1,
+  headlineRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   headline: {
-    fontSize: 56,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    fontWeight: '800',
+    fontSize: 48,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    fontWeight: '400',
     color: COLORS.textPrimary,
-    lineHeight: 60,
-    letterSpacing: -1,
+    lineHeight: 54,
+    letterSpacing: -0.5,
   },
-  illustrationContainer: {
+  logo: {
+    width: 56,
+    height: 56,
+    marginTop: 2,
+  },
+  illustrationSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
+    flex: 1,
+    marginTop: -115,
+  },
+  illustration: {
+    width: '95%',
+    aspectRatio: 1,
+    maxHeight: 320,
   },
   tagline: {
     fontSize: 17,
@@ -192,6 +115,7 @@ const styles = StyleSheet.create({
     color: '#9E9E9E',
     textAlign: 'center',
     lineHeight: 24,
+    marginTop: 8,
   },
   taglineBold: {
     fontFamily: TYPOGRAPHY.fontFamilyBold,
@@ -204,32 +128,32 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     flex: 1,
-    height: 54,
+    height: 48,
     borderRadius: 9999,
-    borderWidth: 1.5,
-    borderColor: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
   },
   loginButtonText: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    fontWeight: '700',
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     color: COLORS.textPrimary,
   },
   signUpButton: {
     flex: 1,
-    height: 54,
+    height: 48,
     borderRadius: 9999,
     backgroundColor: COLORS.brandPrimary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   signUpButtonText: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    fontWeight: '700',
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     color: COLORS.textPrimary,
   },
 });

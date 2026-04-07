@@ -225,7 +225,7 @@ export function useAuth() {
             // Reset navigation to the initial route of the logged-out stack
             navigation.reset({
               index: 0,
-              routes: [{ name: 'IntroScreen' }],
+              routes: [{ name: 'Welcome' }],
             });
           } catch (navError) {
             console.error('[useAuth] Error during navigation reset:', navError);
@@ -597,7 +597,7 @@ export function useAuth() {
             // Reset navigation to the initial route of the logged-out stack
             navigation.reset({
               index: 0,
-              routes: [{ name: 'IntroScreen' }],
+              routes: [{ name: 'Welcome' }],
             });
           } catch (navError) {
             console.error('[useAuth] Error during navigation reset:', navError);
@@ -795,7 +795,7 @@ export function useAuth() {
             // Reset navigation to the initial route of the logged-out stack
             navigation.reset({
               index: 0,
-              routes: [{ name: 'IntroScreen' }],
+              routes: [{ name: 'Welcome' }],
             });
           } catch (navError) {
             console.error('[useAuth] Error during navigation reset:', navError);
@@ -866,7 +866,7 @@ export function useAuth() {
             // Reset navigation to the initial route of the logged-out stack
             navigation.reset({
               index: 0,
-              routes: [{ name: 'IntroScreen' }],
+              routes: [{ name: 'Welcome' }],
             });
           } catch (navError) {
             console.error('[useAuth] Error during navigation reset:', navError);
@@ -898,7 +898,7 @@ export function useAuth() {
       try {
         navigation.reset({
           index: 0,
-          routes: [{ name: 'IntroScreen' }],
+          routes: [{ name: 'Welcome' }],
         });
       } catch (navError) {
         console.error('[useAuth] Error during navigation reset:', navError);

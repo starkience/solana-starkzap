@@ -88,6 +88,21 @@ export default function InvestScreen() {
   const [cashBalance, setCashBalance] = useState(0.0);
   const [investAmount, setInvestAmount] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [confirmedAmount, setConfirmedAmount] = useState(0);
+
+  // Swipe button entrance animation
+  const swipeButtonAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.spring(swipeButtonAnim, {
+        toValue: 1,
+        friction: 14,
+        tension: 60,
+        useNativeDriver: true,
+      }).start();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Lifecycle steps state
   const [steps, setSteps] = useState<LifecycleStep[]>([]);
@@ -98,8 +113,7 @@ export default function InvestScreen() {
   const usdcApy = 3.64;
 
   // The amount the user wants to invest (defaults to full balance)
-  const effectiveAmount = parseFloat(investAmount) || cashBalance;
-  const displayAmount = investAmount || (cashBalance > 0 ? cashBalance.toFixed(2) : '0');
+  const effectiveAmount = investAmount.length > 0 ? (parseFloat(investAmount) || 0) : (cashBalance || 0);
 
   // Fetch real Arbitrum USDC balance
   useEffect(() => {
@@ -125,7 +139,7 @@ export default function InvestScreen() {
   const threeYearEarning = effectiveAmount * activeApy / 100 * 3;
 
   const handleSetMax = () => {
-    setInvestAmount(cashBalance.toFixed(2));
+    setInvestAmount((cashBalance || 0).toFixed(2));
   };
 
   /** Advance lifecycle steps based on status messages */
@@ -168,6 +182,7 @@ export default function InvestScreen() {
         i === 0 ? { ...s, status: 'completed' as StepStatus } : s
       );
       setSteps(usdcSteps);
+      setConfirmedAmount(amount);
       setFlowState('processing');
       overlaySlide.setValue(0);
       setTimeout(() => {
@@ -183,7 +198,7 @@ export default function InvestScreen() {
       return;
     }
     if (amount > cashBalance) {
-      Alert.alert('Insufficient funds', `You only have $${cashBalance.toFixed(2)} USDC.`);
+      Alert.alert('Insufficient funds', `You only have $${(cashBalance || 0).toFixed(2)} USDC.`);
       resetSwipe();
       return;
     }
@@ -201,6 +216,7 @@ export default function InvestScreen() {
         : s.description,
     }));
     setSteps(btcSteps);
+    setConfirmedAmount(amount);
     setFlowState('processing');
     overlaySlide.setValue(0);
     overlayOpacity.setValue(1);
@@ -268,22 +284,25 @@ export default function InvestScreen() {
     overlaySlide.setValue(0);
   };
 
+  /** Close button — slide button down first, then navigate back */
+  const handleClose = () => {
+    Animated.timing(swipeButtonAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      navigation.goBack();
+    });
+  };
+
   /** Smooth slide-down dismiss for success overlay */
   const handleSuccessTap = () => {
-    Animated.parallel([
-      Animated.timing(overlaySlide, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 350,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      resetSwipe();
-      navigation.navigate('Dashboard' as never);
+    Animated.timing(overlaySlide, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start(() => {
+      navigation.goBack();
     });
   };
 
@@ -298,7 +317,7 @@ export default function InvestScreen() {
           <View style={styles.header}>
             <View style={{ width: 40 }} />
             <Text style={styles.headerTitle}>Start Earning</Text>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
+            <TouchableOpacity onPress={handleClose} style={styles.headerButton}>
               <Ionicons name="close" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
@@ -308,28 +327,11 @@ export default function InvestScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Amount input + Toggle */}
-            <Text style={styles.balanceLabel}>Amount to invest:</Text>
-            <View style={styles.amountInputRow}>
-              <Text style={styles.amountDollarSign}>$</Text>
-              <TextInput
-                style={styles.amountInput}
-                value={investAmount}
-                onChangeText={setInvestAmount}
-                placeholder={cashBalance > 0 ? cashBalance.toFixed(2) : '0.00'}
-                placeholderTextColor={COLORS.textSecondary}
-                keyboardType="decimal-pad"
-                returnKeyType="done"
-              />
-              <Text style={styles.amountCurrency}>USDC</Text>
-            </View>
-            <View style={styles.amountHelperRow}>
-              <Text style={styles.amountAvailable}>
-                Available: ${cashBalance.toFixed(2)}
-              </Text>
-              <TouchableOpacity onPress={handleSetMax} style={styles.maxBadge}>
-                <Text style={styles.maxBadgeText}>Max</Text>
-              </TouchableOpacity>
+            {/* Balance display */}
+            <Text style={styles.balanceLabel}>Available Cash Balance:</Text>
+            <View style={styles.balanceDisplayRow}>
+              <Text style={styles.balanceDollar}>${(cashBalance || 0).toFixed(2)}</Text>
+              <Text style={styles.balanceCurrency}>USDC</Text>
             </View>
 
             {/* Mode toggle */}
@@ -412,22 +414,33 @@ export default function InvestScreen() {
             )}
           </ScrollView>
 
-          {/* Swipe button */}
-          {flowState === 'idle' && (
-            <View style={styles.bottomArea}>
-              <Animated.View {...panResponder.panHandlers}>
-                <View style={[styles.swipeButton, { backgroundColor: accentColor }]}>
-                  <Ionicons name="chevron-up" size={16} color={buttonTextColor} />
-                  <Ionicons name="chevron-up" size={16} color={buttonTextColor} style={{ marginTop: -10 }} />
-                  <Text style={[styles.swipeButtonText, { color: buttonTextColor }]}>
-                    {mode === 'btc' ? 'Swipe up to earn BTC' : 'Swipe up to invest'}
-                  </Text>
-                </View>
-              </Animated.View>
-            </View>
-          )}
         </View>
       </SafeAreaView>
+
+      {/* Swipe button — outside SafeAreaView, slides up on mount */}
+      {flowState === 'idle' && (
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.swipeButton,
+            {
+              backgroundColor: accentColor,
+              transform: [{
+                translateY: swipeButtonAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [120, 0],
+                }),
+              }],
+            },
+          ]}
+        >
+          <Ionicons name="chevron-up" size={16} color={COLORS.textPrimary} />
+          <Ionicons name="chevron-up" size={16} color={COLORS.textPrimary} style={{ marginTop: -10 }} />
+          <Text style={[styles.swipeButtonText, { color: COLORS.textPrimary }]}>
+            {mode === 'btc' ? 'Swipe up to earn BTC' : 'Swipe up to invest'}
+          </Text>
+        </Animated.View>
+      )}
 
       {/* ── Processing overlay — simple status + link to History ── */}
       {(flowState === 'processing' || flowState === 'failed') && (
@@ -451,7 +464,7 @@ export default function InvestScreen() {
 
             <View style={lcStyles.amountSection}>
               <Text style={lcStyles.amountLabel}>Investing</Text>
-              <Text style={lcStyles.amountValue}>${effectiveAmount.toFixed(2)} USDC</Text>
+              <Text style={lcStyles.amountValue}>${confirmedAmount.toFixed(2)} USDC</Text>
             </View>
 
             {flowState === 'processing' && (
@@ -515,13 +528,9 @@ export default function InvestScreen() {
               transform: [{
                 translateY: overlaySlide.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0, 800],
+                  outputRange: [0, 900],
                 }),
               }],
-              opacity: overlayOpacity.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 1],
-              }),
             },
           ]}>
             <View style={styles.successContent}>
@@ -532,7 +541,7 @@ export default function InvestScreen() {
                 DEPOSIT{'\n'}INITIATED
               </Text>
               <Text style={[styles.successSubtitle, { color: buttonTextColor }]}>
-                Your ${effectiveAmount.toFixed(0) || '0'} will start earning shortly!
+                Your ${confirmedAmount.toFixed(2)} will start earning shortly!
               </Text>
               {activeApy > 0 && (
                 <Text style={[styles.successYield, { color: buttonTextColor }]}>
@@ -686,63 +695,30 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   balanceLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily,
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
-  amountInputRow: {
+  balanceDisplayRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 4,
+    marginBottom: 16,
   },
-  amountDollarSign: {
-    fontSize: 32,
-    fontFamily: TYPOGRAPHY.fontFamily,
-    color: COLORS.textSecondary,
-    marginRight: 2,
-  },
-  amountInput: {
-    fontSize: 42,
+  balanceDollar: {
+    fontSize: 44,
     fontFamily: TYPOGRAPHY.fontFamilyBold,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    minWidth: 60,
-    textAlign: 'center',
-    padding: 0,
   },
-  amountCurrency: {
-    fontSize: 18,
-    fontFamily: TYPOGRAPHY.fontFamily,
+  balanceCurrency: {
+    fontSize: 44,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     color: COLORS.textSecondary,
     marginLeft: 6,
-    marginBottom: 6,
-  },
-  amountHelperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    marginTop: 6,
-    marginBottom: 12,
-  },
-  amountAvailable: {
-    fontSize: 13,
-    fontFamily: TYPOGRAPHY.fontFamily,
-    color: COLORS.textSecondary,
-  },
-  maxBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: COLORS.greyBorderdark,
-  },
-  maxBadgeText: {
-    fontSize: 13,
-    fontFamily: TYPOGRAPHY.fontFamilyMedium,
-    color: COLORS.textPrimary,
   },
   toggleRow: {
     alignItems: 'center',
@@ -795,7 +771,7 @@ const styles = StyleSheet.create({
   earnCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 28,
@@ -837,11 +813,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   projections: {
-    gap: 18,
+    gap: 0,
   },
   projectionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    paddingVertical: 14,
     alignItems: 'center',
   },
   projectionLabel: {
@@ -864,21 +843,18 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamilyMedium,
     color: COLORS.btcOrange,
   },
-  bottomArea: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-  },
   swipeButton: {
-    height: 64,
-    borderRadius: 20,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
   swipeButtonText: {
-    fontSize: 15,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    fontWeight: '700',
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     marginTop: -4,
   },
   fullOverlay: {

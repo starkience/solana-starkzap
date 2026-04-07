@@ -11,6 +11,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/shared/state/store';
@@ -28,29 +29,29 @@ interface HamburgerMenuProps {
 
 export default function HamburgerMenu({ visible, onClose }: HamburgerMenuProps) {
   const overlayAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(height)).current;
   const [rendered, setRendered] = useState(false);
   const navigation = useNavigation<any>();
   const { logout } = useAuth();
 
   const walletAddress = useSelector((state: RootState) => state.starknet?.walletAddress);
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: async () => {
-          onClose();
-          try {
-            await logout();
-          } catch (e) {
-            navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
-          }
-        },
-      },
-    ]);
+  // Individual animated values for each menu item (slide from right)
+  const itemAnims = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+
+  const handleLogout = async () => {
+    onClose();
+    try {
+      await logout();
+    } catch (e) {
+      navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
+    }
   };
 
   const handleViewOnExplorer = () => {
@@ -60,42 +61,6 @@ export default function HamburgerMenu({ visible, onClose }: HamburgerMenuProps) 
     onClose();
   };
 
-  useEffect(() => {
-    if (visible) {
-      setRendered(true);
-      Animated.parallel([
-        Animated.timing(overlayAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          friction: 20,
-          tension: 65,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else if (rendered) {
-      Animated.parallel([
-        Animated.timing(overlayAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: height,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
-        if (finished) setRendered(false);
-      });
-    }
-  }, [visible]);
-
-  if (!rendered) return null;
-
   const menuItems = [
     { label: 'History', onPress: () => { onClose(); navigation.navigate('History'); } },
     { label: 'Refer a friend', onPress: () => onClose() },
@@ -104,53 +69,105 @@ export default function HamburgerMenu({ visible, onClose }: HamburgerMenuProps) 
     { label: 'Docs', onPress: () => { Linking.openURL('https://docs.axal.com'); onClose(); } },
   ];
 
+  useEffect(() => {
+    if (visible) {
+      setRendered(true);
+      // Reset item anims
+      itemAnims.forEach(a => a.setValue(0));
+
+      // Fade in overlay
+      Animated.timing(overlayAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+
+      // Stagger menu items sliding in from right — fast
+      const staggerAnims = itemAnims.map((anim) =>
+        Animated.spring(anim, {
+          toValue: 1,
+          friction: 18,
+          tension: 120,
+          useNativeDriver: true,
+        })
+      );
+      Animated.stagger(30, staggerAnims).start();
+    } else if (rendered) {
+      // Fade out
+      Animated.timing(overlayAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) setRendered(false);
+      });
+    }
+  }, [visible]);
+
+  if (!rendered) return null;
+
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       <TouchableWithoutFeedback onPress={onClose}>
-        <Animated.View
-          style={[
-            styles.overlay,
-            {
-              opacity: overlayAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 0.4],
-              }),
-            },
-          ]}
-        />
+        <Animated.View style={[styles.overlay, { opacity: overlayAnim }]}>
+          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+        </Animated.View>
       </TouchableWithoutFeedback>
 
       <Animated.View
-        style={[
-          styles.menu,
-          { transform: [{ translateY: slideAnim }] },
-        ]}
+        style={[styles.menu, { opacity: overlayAnim }]}
+        pointerEvents="box-none"
       >
         {/* Close button */}
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <Ionicons name="close" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
 
-        {/* Menu items */}
+        {/* Menu items — staggered slide from right */}
         <View style={styles.menuItems}>
           {menuItems.map((item, index) => (
-            <TouchableOpacity
+            <Animated.View
               key={index}
-              style={styles.menuItem}
-              onPress={item.onPress}
-              activeOpacity={0.7}
+              style={{
+                opacity: itemAnims[index],
+                transform: [{
+                  translateX: itemAnims[index].interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [80, 0],
+                  }),
+                }],
+              }}
             >
-              <Text style={styles.menuItemText}>{item.label}</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={item.onPress}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.menuItemText}>{item.label}</Text>
+              </TouchableOpacity>
+            </Animated.View>
           ))}
 
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={handleLogout}
-            activeOpacity={0.7}
+          {/* Logout — also animated */}
+          <Animated.View
+            style={{
+              opacity: itemAnims[5],
+              transform: [{
+                translateX: itemAnims[5].interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [80, 0],
+                }),
+              }],
+            }}
           >
-            <Text style={styles.logoutText}>Log out</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={handleLogout}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.logoutText}>Log out</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </Animated.View>
     </View>
@@ -160,7 +177,6 @@ export default function HamburgerMenu({ visible, onClose }: HamburgerMenuProps) 
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000',
   },
   menu: {
     position: 'absolute',
@@ -168,10 +184,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'flex-end',
-    paddingRight: 40,
+    paddingRight: 28,
+    paddingTop: Platform.OS === 'ios' ? 100 : 80,
   },
   closeButton: {
     position: 'absolute',
@@ -184,20 +200,22 @@ const styles = StyleSheet.create({
   },
   menuItems: {
     alignItems: 'flex-end',
-    gap: 8,
+    gap: 6,
   },
   menuItem: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   menuItemText: {
     fontSize: 20,
     fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     color: COLORS.textPrimary,
     textAlign: 'right',
   },
   logoutText: {
     fontSize: 20,
     fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     color: COLORS.negativeRed,
     textAlign: 'right',
     marginTop: 8,

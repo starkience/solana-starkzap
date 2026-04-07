@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   copyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,

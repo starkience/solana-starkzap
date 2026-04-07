@@ -257,18 +257,32 @@ export default function HistoryScreen() {
                       <View style={styles.expandedSection}>
                         {lifecycleSteps.map((step, i) => renderStepRow(step, i, lifecycleSteps.length))}
 
-                        {/* TX hash link */}
-                        {op.txHash && url && (
-                          <TouchableOpacity
-                            style={styles.txHashRow}
-                            onPress={() => Linking.openURL(url)}
-                          >
-                            <Ionicons name="open-outline" size={14} color={COLORS.brandPrimary} />
-                            <Text style={styles.txHashLink}>
-                              View on Explorer: {truncateHash(op.txHash)}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
+                        {/* TX hash links — bridge | swap | stake */}
+                        {op.txHash && (() => {
+                          const hashes = op.txHash!.split('|').filter(Boolean);
+                          const labels = ['Bridge (Arbiscan)', 'Swap (Voyager)', 'Stake (Voyager)'];
+                          return (
+                            <View style={styles.txLinksSection}>
+                              {hashes.map((hash, hi) => {
+                                const link = hi === 0
+                                  ? explorerUrl(op.direction, hash) || `https://arbiscan.io/tx/${hash}`
+                                  : `https://voyager.online/tx/${hash}`;
+                                return (
+                                  <TouchableOpacity
+                                    key={hi}
+                                    style={styles.txHashRow}
+                                    onPress={() => Linking.openURL(link!)}
+                                  >
+                                    <Ionicons name="open-outline" size={14} color={COLORS.brandPrimary} />
+                                    <Text style={styles.txHashLink}>
+                                      {labels[hi] || 'View'}: {truncateHash(hash)}
+                                    </Text>
+                                  </TouchableOpacity>
+                                );
+                              })}
+                            </View>
+                          );
+                        })()}
                       </View>
                     )}
                   </View>
@@ -474,14 +488,17 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 1,
   },
-  txHashRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  txLinksSection: {
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: COLORS.greyBorder,
+    gap: 8,
+  },
+  txHashRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   txHashLink: {
     fontSize: 12,

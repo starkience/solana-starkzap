@@ -23,7 +23,10 @@ import { RootState } from '@/shared/state/store';
 import { StakingPosition } from '@/shared/state/starknet/reducer';
 import { TOKEN_LOGOS } from '@/assets/tokenLogos';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { BlurView } from 'expo-blur';
+import { LinearGradient as RNLinearGradient } from 'expo-linear-gradient';
 import { getEVMUSDCBalance } from '@/modules/bridge/services/evmBalanceService';
+import { fetchStakingApy } from '@/modules/starknet/services/apyService';
 
 type TimePeriod = '7D' | '30D' | '90D';
 
@@ -48,6 +51,12 @@ export default function DashboardScreen() {
   // Fetch Arbitrum USDC balance (idle cash)
   const [idleCash, setIdleCash] = useState(0.0);
   const [balanceLoading, setBalanceLoading] = useState(false);
+  const [btcApy, setBtcApy] = useState(0);
+
+  // Fetch live APY
+  useEffect(() => {
+    fetchStakingApy().then(data => setBtcApy(data.btcApy));
+  }, []);
 
   const fetchArbitrumBalance = useCallback(async () => {
     if (!baseAddress) return;
@@ -69,62 +78,66 @@ export default function DashboardScreen() {
     return () => clearInterval(interval);
   }, [fetchArbitrumBalance]);
 
-  // Compute real totals from staking positions
-  const stakedTotal = stakingPositions.reduce(
-    (sum, pos) => sum + parseFloat(pos.totalAmount || pos.stakedAmount || '0'),
+  // Compute real totals from staking positions (convert BTC → USD)
+  const BTC_PRICE = 100000; // Rough BTC price estimate
+  const safeParse = (val: string) => {
+    const n = parseFloat((val || '0').replace(/[^0-9.\-]/g, ''));
+    return isNaN(n) ? 0 : n;
+  };
+  const stakedUsd = stakingPositions.reduce(
+    (sum, pos) => sum + safeParse(pos.totalAmount || pos.stakedAmount) * BTC_PRICE,
     0
   );
-  const savingsBalance = stakedTotal;
-  const totalBalance = stakedTotal + idleCash;
+  const savingsBalance = stakedUsd;
+  const totalBalance = savingsBalance + (idleCash || 0);
   const hasDeposits = totalBalance > 0 || stakingPositions.length > 0;
   const isEarning = savingsBalance > 0;
 
   // Simple chart data (mock performance curve)
-  const chartWidth = SCREEN_WIDTH - 40;
-  const chartHeight = 120;
+  const chartWidth = SCREEN_WIDTH;
+  const chartHeight = 280;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.accountLabel}>Axal Account</Text>
-            <Text style={styles.balanceText}>
-              ${totalBalance.toFixed(2)}{' '}
-              <Text style={styles.balanceCurrency}>USD</Text>
-            </Text>
-            <Text style={styles.subBalance}>
-              ▲ US$ 0,0000
-              {hasDeposits && totalBalance > 0 && (
-                <Text style={styles.bridgingText}>
-                  {'  '}US$ {totalBalance.toFixed(2)} Earning
-                </Text>
-              )}
-            </Text>
-          </View>
-          <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuButton}>
-            <Ionicons name="menu" size={26} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {/* Header — scrolls with content */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.accountLabel}>Axal Account</Text>
+              <Text style={styles.balanceText}>
+                ${(totalBalance || 0).toFixed(2)}{' '}
+                <Text style={styles.balanceCurrency}>USD</Text>
+              </Text>
+              <Text style={styles.subBalance}>
+                ▲ US$ 0,0000
+                {hasDeposits && totalBalance > 0 && (
+                  <Text style={styles.bridgingText}>
+                    {'  '}US$ {(totalBalance || 0).toFixed(2)} Earning
+                  </Text>
+                )}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuButton}>
+              <Ionicons name="menu" size={26} color={COLORS.textPrimary} />
+            </TouchableOpacity>
+          </View>
           {/* Empty state / Chart area */}
           {!hasDeposits ? (
             <View style={styles.emptyState}>
               {/* Coins illustration using icons */}
               <View style={styles.illustrationContainer}>
                 <View style={styles.coinStack}>
-                  <View style={[styles.coinBase, { backgroundColor: '#C8E6C9' }]} />
-                  <View style={[styles.coinMid, { backgroundColor: '#A5D6A7' }]} />
-                  <View style={[styles.coinTop, { backgroundColor: '#81C784' }]} />
+                  <View style={[styles.coinBase, { backgroundColor: 'rgba(0, 255, 59, 0.25)' }]} />
+                  <View style={[styles.coinMid, { backgroundColor: 'rgba(0, 255, 59, 0.35)' }]} />
+                  <View style={[styles.coinTop, { backgroundColor: 'rgba(0, 255, 59, 0.50)' }]} />
                 </View>
-                <Ionicons name="cash-outline" size={64} color="#81C784" style={styles.coinIcon} />
+                <Ionicons name="cash-outline" size={64} color="rgba(0, 255, 59, 0.50)" style={styles.coinIcon} />
               </View>
               <Text style={styles.emptyTitle}>You have no deposits yet!</Text>
               <Text style={styles.emptySubtitle}>
@@ -133,27 +146,47 @@ export default function DashboardScreen() {
             </View>
           ) : (
             <View style={styles.chartArea}>
-              {/* Performance chart */}
-              <Svg width={chartWidth} height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
-                <Defs>
-                  <LinearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor={COLORS.brandPrimary} stopOpacity="0.15" />
-                    <Stop offset="100%" stopColor={COLORS.brandPrimary} stopOpacity="0" />
-                  </LinearGradient>
-                </Defs>
-                {/* Area fill */}
-                <Path
-                  d={`M0 ${chartHeight} L0 ${chartHeight * 0.9} Q${chartWidth * 0.15} ${chartHeight * 0.85} ${chartWidth * 0.3} ${chartHeight * 0.75} Q${chartWidth * 0.5} ${chartHeight * 0.6} ${chartWidth * 0.7} ${chartHeight * 0.4} Q${chartWidth * 0.85} ${chartHeight * 0.25} ${chartWidth} ${chartHeight * 0.1} L${chartWidth} ${chartHeight} Z`}
-                  fill="url(#chartGrad)"
-                />
-                {/* Line */}
-                <Path
-                  d={`M0 ${chartHeight * 0.9} Q${chartWidth * 0.15} ${chartHeight * 0.85} ${chartWidth * 0.3} ${chartHeight * 0.75} Q${chartWidth * 0.5} ${chartHeight * 0.6} ${chartWidth * 0.7} ${chartHeight * 0.4} Q${chartWidth * 0.85} ${chartHeight * 0.25} ${chartWidth} ${chartHeight * 0.1}`}
-                  stroke={COLORS.brandPrimary}
-                  strokeWidth={2.5}
-                  fill="none"
-                />
-              </Svg>
+              {/* Performance chart — spike position adapts to time period */}
+              {(() => {
+                // Spike position: how far back the deposit happened relative to the time window
+                // 7D = deposit was recent → spike near the right
+                // 30D = deposit happened a while ago → spike more toward the middle
+                // 90D = deposit happened long ago → spike early, more flat time earning
+                const spikeX = selectedPeriod === '7D' ? 0.85
+                  : selectedPeriod === '30D' ? 0.7
+                  : 0.35;
+                // After deposit, slight upward slope to show yield accumulation
+                const yieldSlope = selectedPeriod === '7D' ? 0.01
+                  : selectedPeriod === '30D' ? 0.03
+                  : 0.08;
+                const baseY = chartHeight * 0.95;
+                const topY = chartHeight * 0.15;
+                const endY = topY - (yieldSlope * chartHeight);
+                const safeEndY = Math.max(endY, chartHeight * 0.05);
+
+                return (
+                  <Svg width={chartWidth} height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+                    <Defs>
+                      <LinearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                        <Stop offset="0%" stopColor={COLORS.brandPrimary} stopOpacity="0.20" />
+                        <Stop offset="100%" stopColor={COLORS.brandPrimary} stopOpacity="0" />
+                      </LinearGradient>
+                    </Defs>
+                    {/* Area fill */}
+                    <Path
+                      d={`M0 ${chartHeight} L0 ${baseY} L${chartWidth * spikeX} ${baseY} Q${chartWidth * (spikeX + 0.02)} ${baseY} ${chartWidth * (spikeX + 0.04)} ${topY} Q${chartWidth * (spikeX + 0.05)} ${topY - 4} ${chartWidth * (spikeX + 0.06)} ${topY} L${chartWidth} ${safeEndY} L${chartWidth} ${chartHeight} Z`}
+                      fill="url(#chartGrad)"
+                    />
+                    {/* Line */}
+                    <Path
+                      d={`M0 ${baseY} L${chartWidth * spikeX} ${baseY} Q${chartWidth * (spikeX + 0.02)} ${baseY} ${chartWidth * (spikeX + 0.04)} ${topY} Q${chartWidth * (spikeX + 0.05)} ${topY - 4} ${chartWidth * (spikeX + 0.06)} ${topY} L${chartWidth} ${safeEndY}`}
+                      stroke={COLORS.brandPrimary}
+                      strokeWidth={2.5}
+                      fill="none"
+                    />
+                  </Svg>
+                );
+              })()}
 
               {/* Period selector */}
               <View style={styles.periodRow}>
@@ -180,66 +213,6 @@ export default function DashboardScreen() {
             </View>
           )}
 
-          {/* Earn more / Start Earning card */}
-          {!hasDeposits ? (
-            <TouchableOpacity
-              style={styles.earnCard}
-              onPress={() => navigation.navigate('AddFunds' as never)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.earnCardIconWrap}>
-                <Ionicons name="person-outline" size={22} color={COLORS.textPrimary} />
-              </View>
-              <View style={styles.earnCardContent}>
-                <Text style={styles.earnCardTitle}>Earn more!</Text>
-                <Text style={styles.earnCardSub}>
-                  Add US$ 500 to earn US$ 18,2 in one year.
-                </Text>
-              </View>
-              <View style={styles.earnCardArrow}>
-                <Ionicons name="arrow-forward" size={16} color={COLORS.textPrimary} />
-              </View>
-            </TouchableOpacity>
-          ) : idleCash > 0 ? (
-            <TouchableOpacity
-              style={styles.startEarningCard}
-              onPress={() => navigation.navigate('Invest' as never)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.earnCardIconWrap}>
-                <Ionicons name="cash-outline" size={22} color={COLORS.textPrimary} />
-              </View>
-              <View style={styles.earnCardContent}>
-                <Text style={styles.earnCardTitle}>Start Earning!</Text>
-                <Text style={styles.earnCardSub}>
-                  You have idle cash that's not invested in a position yet.
-                </Text>
-              </View>
-              <View style={styles.earnCardArrow}>
-                <Ionicons name="arrow-forward" size={16} color={COLORS.textPrimary} />
-              </View>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.earnCard}
-              onPress={() => navigation.navigate('AddFunds' as never)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.earnCardIconWrap}>
-                <Ionicons name="person-outline" size={22} color={COLORS.textPrimary} />
-              </View>
-              <View style={styles.earnCardContent}>
-                <Text style={styles.earnCardTitle}>Earn more!</Text>
-                <Text style={styles.earnCardSub}>
-                  Add US$ 500 to earn US$ 18,2 in one year.
-                </Text>
-              </View>
-              <View style={styles.earnCardArrow}>
-                <Ionicons name="arrow-forward" size={16} color={COLORS.textPrimary} />
-              </View>
-            </TouchableOpacity>
-          )}
-
           {/* Savings Account row */}
           <TouchableOpacity
             style={styles.accountRow}
@@ -249,24 +222,23 @@ export default function DashboardScreen() {
             <View>
               <Text style={styles.rowTitle}>Savings Account</Text>
               {isEarning ? (
-                <Text style={styles.rowSubEarning}>Earning 3.64%</Text>
+                <Text style={styles.rowSubEarning}>Earning {btcApy > 0 ? btcApy.toFixed(2) : '—'}%</Text>
               ) : (
                 <Text style={styles.rowSub}>High Yield Account</Text>
               )}
             </View>
             <View style={styles.rowRight}>
-              <Text style={styles.rowAmount}>US$ {savingsBalance.toFixed(2)}</Text>
+              <Text style={styles.rowAmount}>US$ {(savingsBalance || 0).toFixed(2)}</Text>
               <Ionicons name="chevron-forward" size={16} color="#BDBDBD" />
             </View>
           </TouchableOpacity>
 
-          {/* Idle Cash row */}
-          <TouchableOpacity style={styles.accountRow} activeOpacity={0.7}>
+          {/* Idle Cash row — no top border */}
+          <TouchableOpacity style={styles.accountRowNoBorder} activeOpacity={0.7}>
             <View>
               <Text style={styles.rowTitle}>Idle Cash</Text>
               <View style={styles.rowSubRow}>
-                <Text style={styles.rowSub}>Cash Account Balance</Text>
-                {hasDeposits && idleCash <= 0 && null}
+                <Text style={styles.rowSubDark}>Cash Account Balance</Text>
                 {hasDeposits && idleCash > 0 && (
                   <View style={styles.notEarningBadge}>
                     <View style={styles.notEarningDot} />
@@ -276,7 +248,7 @@ export default function DashboardScreen() {
               </View>
             </View>
             <View style={styles.rowRight}>
-              <Text style={styles.rowAmount}>US$ {idleCash.toFixed(2)}</Text>
+              <Text style={styles.rowAmount}>US$ {(idleCash || 0).toFixed(2)}</Text>
               <Ionicons name="chevron-forward" size={16} color="#BDBDBD" />
             </View>
           </TouchableOpacity>
@@ -284,6 +256,7 @@ export default function DashboardScreen() {
           {/* Your Holdings section */}
           {stakingPositions.length > 0 && (
             <>
+              <View style={styles.holdingsDivider} />
               <View style={styles.holdingsHeader}>
                 <Text style={styles.holdingsTitle}>Your Holdings</Text>
                 <TouchableOpacity style={styles.sortButton}>
@@ -291,37 +264,55 @@ export default function DashboardScreen() {
                   <Text style={styles.sortText}>Sort</Text>
                 </TouchableOpacity>
               </View>
-              {stakingPositions.map((pos: StakingPosition, i: number) => (
-                <View key={i} style={styles.holdingRow}>
-                  <View style={styles.holdingIcon}>
-                    <Image
-                      source={{ uri: (TOKEN_LOGOS as any)[pos.tokenSymbol] || TOKEN_LOGOS.BTC }}
-                      style={styles.holdingLogo}
-                    />
+              {stakingPositions.map((pos: StakingPosition, i: number) => {
+                // Parse amounts — toFormatted() may return "0.00006 WBTC" or just "0.00006"
+                const stakedNum = parseFloat(pos.stakedAmount.replace(/[^0-9.]/g, '')) || 0;
+                const rewardsNum = parseFloat(pos.rewardsAmount.replace(/[^0-9.]/g, '')) || 0;
+                const totalNum = parseFloat(pos.totalAmount.replace(/[^0-9.]/g, '')) || stakedNum;
+                // Rough USD estimate (BTC ~$100k)
+                const btcPrice = 100000;
+                const usdValue = totalNum * btcPrice;
+                const rewardsUsd = rewardsNum * btcPrice;
+                return (
+                  <View key={i} style={styles.holdingRow}>
+                    <View style={styles.holdingIcon}>
+                      <Image
+                        source={{ uri: (TOKEN_LOGOS as any)[pos.tokenSymbol] || TOKEN_LOGOS.BTC }}
+                        style={styles.holdingLogo}
+                      />
+                    </View>
+                    <View style={styles.holdingInfo}>
+                      <Text style={styles.holdingName}>
+                        Karnot BTC staking validator
+                      </Text>
+                      <Text style={styles.holdingSub}>Karnot</Text>
+                    </View>
+                    <View style={styles.holdingRight}>
+                      <Text style={styles.holdingAmount}>
+                        US$ {usdValue.toFixed(2)}
+                      </Text>
+                      <Text style={styles.holdingRewards}>
+                        {totalNum > 0 ? totalNum.toFixed(8) : stakedNum.toFixed(8)} {pos.tokenSymbol}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.holdingInfo}>
-                    <Text style={styles.holdingName}>
-                      {pos.tokenSymbol} — {pos.validatorName}
-                    </Text>
-                    <Text style={styles.holdingSub}>{pos.validatorName}</Text>
-                  </View>
-                  <View style={styles.holdingRight}>
-                    <Text style={styles.holdingAmount}>
-                      US$ {parseFloat(pos.totalAmount || pos.stakedAmount || '0').toFixed(2)}
-                    </Text>
-                    <Text style={styles.holdingRewards}>
-                      US$ {parseFloat(pos.rewardsAmount || '0').toFixed(4)}
-                    </Text>
-                  </View>
-                </View>
-              ))}
+                );
+              })}
             </>
           )}
 
-          <View style={{ height: 20 }} />
+          <View style={{ height: 80 }} />
         </ScrollView>
 
-        {/* Bottom buttons */}
+        {/* Fade gradient above buttons */}
+        <RNLinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.85)', 'rgba(255,255,255,1)']}
+          locations={[0, 0.5, 1]}
+          style={styles.bottomFade}
+          pointerEvents="none"
+        />
+
+        {/* Bottom buttons — fixed at bottom */}
         <View style={styles.bottomArea}>
           {hasDeposits ? (
             <View style={styles.bottomButtonRow}>
@@ -370,14 +361,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingHorizontal: 20,
-    paddingTop: 4,
+    paddingHorizontal: 10,
+    paddingTop: 16,
     paddingBottom: 12,
   },
   accountLabel: {
-    fontSize: 14,
-    fontFamily: TYPOGRAPHY.fontFamily,
-    color: '#9E9E9E',
+    fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
   },
   balanceText: {
     fontSize: 34,
@@ -403,13 +395,14 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 4,
     marginTop: 4,
+    marginRight: -4,
   },
   /* Scroll */
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 16,
   },
   /* Empty state */
@@ -473,6 +466,7 @@ const styles = StyleSheet.create({
   chartArea: {
     paddingTop: 8,
     paddingBottom: 8,
+    marginHorizontal: -16,
   },
   periodRow: {
     flexDirection: 'row',
@@ -501,7 +495,7 @@ const styles = StyleSheet.create({
   earnCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
@@ -509,7 +503,7 @@ const styles = StyleSheet.create({
   startEarningCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
@@ -557,15 +551,28 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
   },
+  accountRowNoBorder: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 18,
+  },
   rowTitle: {
     fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+    fontWeight: '700',
     color: COLORS.textPrimary,
   },
   rowSub: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily,
     color: '#9E9E9E',
+    marginTop: 2,
+  },
+  rowSubDark: {
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily,
+    color: '#6B7280',
     marginTop: 2,
   },
   rowSubEarning: {
@@ -607,15 +614,21 @@ const styles = StyleSheet.create({
   },
   rowAmount: {
     fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamily,
+    fontFamily: TYPOGRAPHY.fontFamilyBold,
+    fontWeight: '600',
     color: COLORS.textPrimary,
   },
   /* Holdings */
+  holdingsDivider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginTop: 8,
+  },
   holdingsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 24,
+    paddingTop: 20,
     paddingBottom: 12,
   },
   holdingsTitle: {
@@ -643,8 +656,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
   },
   holdingIcon: {
     width: 40,
@@ -690,10 +701,21 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   /* Bottom */
+  bottomFade: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+  },
   bottomArea: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 16 : 8,
   },
   getStartedButton: {
     height: 54,
@@ -704,8 +726,8 @@ const styles = StyleSheet.create({
   },
   getStartedText: {
     fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     color: COLORS.textPrimary,
   },
   bottomButtonRow: {
@@ -714,32 +736,32 @@ const styles = StyleSheet.create({
   },
   addFundsButton: {
     flex: 1,
-    height: 54,
+    height: 48,
     borderRadius: 9999,
-    borderWidth: 1.5,
-    borderColor: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
   addFundsButtonText: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    fontWeight: '700',
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     color: COLORS.textPrimary,
   },
   earnButton: {
     flex: 1,
-    height: 54,
+    height: 48,
     borderRadius: 9999,
     backgroundColor: COLORS.brandPrimary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   earnButtonText: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamilyBold,
-    fontWeight: '700',
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamilyMedium,
+    fontWeight: '500',
     color: COLORS.textPrimary,
   },
 });

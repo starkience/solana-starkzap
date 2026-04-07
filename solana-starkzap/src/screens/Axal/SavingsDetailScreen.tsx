@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   startEarningCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   earnCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   badge: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontFamily: TYPOGRAPHY.fontFamilyMedium,
-    color: '#2E7D32',
+    color: '#00CC30',
   },
   withdrawTime: {
     fontSize: 12,

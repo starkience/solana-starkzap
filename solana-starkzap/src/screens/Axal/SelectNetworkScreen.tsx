@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   badge: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: 'rgba(0, 255, 59, 0.10)',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -211,6 +211,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontFamily: TYPOGRAPHY.fontFamilyMedium,
-    color: '#2E7D32',
+    color: '#00CC30',
   },
 });
