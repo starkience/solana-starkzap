@@ -85,7 +85,7 @@ const EmbeddedWalletAuth: React.FC<EmbeddedWalletAuthProps> = ({
       // Navigate to PlatformSelectionScreen after a short delay
       // The delay ensures the onWalletConnected callback has time to complete
       setTimeout(() => {
-        navigation.navigate('MainTabs' as never);
+        navigation.navigate('Dashboard' as never);
       }, 100);
     }
   }, [authConfig.provider, status, user, onWalletConnected, navigation]);
@@ -151,7 +151,7 @@ const EmbeddedWalletAuth: React.FC<EmbeddedWalletAuthProps> = ({
 
         // Navigate to MainTabs after a short delay
         setTimeout(() => {
-          navigation.navigate('MainTabs' as never);
+          navigation.navigate('Dashboard' as never);
         }, 100);
       } else {
         Alert.alert('Connection Error', 'No accounts found in wallet');

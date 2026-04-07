@@ -28,4 +28,6 @@ declare module '@env' {
   export const LAYERZERO_API_KEY: string;
   export const JUPITER_API_KEY: string;
   export const ALCHEMY_STARKNET_API_KEY: string;
+  export const ALCHEMY_ARBITRUM_API_KEY: string;
+  export const LAYERSWAP_API_KEY: string;
 }

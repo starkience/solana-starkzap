@@ -13,7 +13,11 @@ import {
   getBridgeQuote,
   bridgeSolanaToStarknet,
   bridgeStarknetToSolana,
+  bridgeEVMToStarknet,
   checkBridgeStatus,
+  isEVMSource,
+  buildEVMBridgeSteps,
+  getSupportedChainsForToken,
   BridgeDirection,
   BridgeQuote,
 } from '../services/bridgeService';
@@ -173,8 +177,109 @@ export function useBridge() {
     };
   }, []);
 
+  /**
+   * Bridge USDC from an EVM chain (e.g. Base) to Starknet using LayerZero.
+   * Signs the EVM transaction with the provided Privy EVM provider.
+   */
+  const bridgeFromEVM = useCallback(
+    async (quote: BridgeQuote, evmProvider: any, direction: BridgeDirection = 'base_to_starknet') => {
+      if (!starknetAddress) {
+        throw new Error('Starknet wallet not initialized');
+      }
+
+      dispatch(setBridging(true));
+      dispatch(setBridgeError(null));
+
+      const op: BridgeOperation = {
+        id: quote.quoteId,
+        direction,
+        tokenSymbol: quote.sourceToken,
+        amount: quote.amount,
+        status: 'bridging',
+        createdAt: new Date().toISOString(),
+      };
+      dispatch(addBridgeOperation(op));
+
+      try {
+        const result = await bridgeEVMToStarknet(
+          quote.quoteId,
+          evmProvider,
+          LZ_API_KEY,
+        );
+        dispatch(
+          updateBridgeOperation({
+            id: quote.quoteId,
+            updates: { txHash: result.txHash, status: 'pending' },
+          }),
+        );
+        startPolling(quote.quoteId, result.txHash);
+        return result;
+      } catch (error: any) {
+        dispatch(
+          updateBridgeOperation({ id: quote.quoteId, updates: { status: 'failed' } }),
+        );
+        dispatch(setBridgeError(error.message));
+        dispatch(setBridging(false));
+        throw error;
+      }
+    },
+    [starknetAddress, dispatch],
+  );
+
+  /**
+   * Get a bridge quote for EVM→Starknet transfers.
+   * srcWalletAddress is the EVM wallet address.
+   */
+  const getEVMQuote = useCallback(
+    async (
+      direction: BridgeDirection,
+      amount: string,
+      evmWalletAddress: string,
+      tokenSymbol: string = 'USDC',
+    ): Promise<BridgeQuote> => {
+      if (!starknetAddress) {
+        throw new Error('Starknet wallet not initialized');
+      }
+
+      return getBridgeQuote(
+        direction,
+        amount,
+        evmWalletAddress,
+        starknetAddress,
+        LZ_API_KEY,
+        tokenSymbol,
+      );
+    },
+    [starknetAddress],
+  );
+
+  /**
+   * Get the EVM transaction steps for a quote.
+   * Returns transaction data that needs to be signed by an external EVM wallet.
+   */
+  const getEVMBridgeSteps = useCallback(
+    async (quoteId: string) => {
+      return buildEVMBridgeSteps(quoteId, LZ_API_KEY);
+    },
+    [],
+  );
+
+  /**
+   * Check which chains support a given token via LayerZero.
+   */
+  const checkSupportedChains = useCallback(
+    async (tokenSymbol: string = 'USDC') => {
+      return getSupportedChainsForToken(tokenSymbol);
+    },
+    [],
+  );
+
   return {
     getQuote,
+    getEVMQuote,
+    getEVMBridgeSteps,
+    bridgeFromEVM,
+    checkSupportedChains,
     bridgeToStarknet,
     bridgeToSolana,
     bridgeOperations: bridgeOps,

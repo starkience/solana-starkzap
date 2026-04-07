@@ -65,7 +65,7 @@ export default function ProfileSidebar({ visible, onClose }: ProfileSidebarProps
             try {
               await logout();
             } catch (e) {
-              navigation.reset({ index: 0, routes: [{ name: 'LoginOptions' }] });
+              navigation.reset({ index: 0, routes: [{ name: 'Welcome' }] });
             }
           },
         },

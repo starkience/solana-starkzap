@@ -224,6 +224,9 @@ export default function App() {
                           solana: {
                             createOnLogin: 'users-without-wallets',
                           },
+                          ethereum: {
+                            createOnLogin: 'users-without-wallets',
+                          },
                         },
                       }}>
                       <NavigationContainer ref={navigationRef}>

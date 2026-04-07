@@ -1,14 +1,12 @@
-import {Amount, fromAddress, getPresets, type WalletInterface} from 'starkzap';
+import {Amount, fromAddress, getPresets, ChainId, type WalletInterface} from 'starkzap';
 import type {Token} from 'starkzap';
-
-const MAINNET_CHAIN_ID = 0x534e5f4d41;
 
 /**
  * Returns Starkzap mainnet token presets (STRK, ETH, USDC, USDT, WBTC, etc.)
  * These are the canonical addresses recognized by Starkzap staking & AVNU swap.
  */
 export function getStarkzapTokenPresets(): Record<string, Token> {
-  return getPresets(MAINNET_CHAIN_ID) as Record<string, Token>;
+  return getPresets(ChainId.MAINNET) as Record<string, Token>;
 }
 
 /**

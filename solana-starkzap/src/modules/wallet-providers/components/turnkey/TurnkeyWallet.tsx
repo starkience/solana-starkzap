@@ -57,7 +57,7 @@ const TurnkeyWalletAuth: React.FC<TurnkeyWalletAuthProps> = ({
     
     // Navigate to MainTabs after a short delay
     setTimeout(() => {
-      navigation.navigate('MainTabs' as never);
+      navigation.navigate('Dashboard' as never);
     }, 100);
   };
   

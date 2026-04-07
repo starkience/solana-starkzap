@@ -18,7 +18,7 @@ export interface StakingPosition {
 
 export interface BridgeOperation {
   id: string;
-  direction: 'solana_to_starknet' | 'starknet_to_solana';
+  direction: string;
   tokenSymbol: string;
   amount: string;
   status: 'pending' | 'bridging' | 'completed' | 'failed';

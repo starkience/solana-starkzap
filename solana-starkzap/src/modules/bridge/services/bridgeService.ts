@@ -14,7 +14,14 @@
 
 import {VersionedTransaction, Connection} from '@solana/web3.js';
 
-export type BridgeDirection = 'solana_to_starknet' | 'starknet_to_solana';
+export type BridgeDirection =
+  | 'solana_to_starknet'
+  | 'starknet_to_solana'
+  | 'base_to_starknet'
+  | 'ethereum_to_starknet'
+  | 'arbitrum_to_starknet'
+  | 'polygon_to_starknet'
+  | 'monad_to_starknet';
 
 export interface BridgeQuote {
   quoteId: string;
@@ -41,6 +48,35 @@ const VT_API_BASE = 'https://transfer.layerzero-api.com/v1';
 
 const CHAIN_KEY_SOLANA = 'solana';
 const CHAIN_KEY_STARKNET = 'starknet';
+
+/** LayerZero chain keys for EVM networks */
+const CHAIN_KEYS: Record<string, string> = {
+  solana: 'solana',
+  starknet: 'starknet',
+  base: 'base',
+  ethereum: 'ethereum',
+  arbitrum: 'arbitrum',
+  polygon: 'polygon',
+  monad: 'monad',
+};
+
+/**
+ * Resolves source and destination chain keys from a BridgeDirection.
+ */
+function resolveChainKeys(direction: BridgeDirection): { srcChain: string; dstChain: string } {
+  const parts = direction.split('_to_');
+  return {
+    srcChain: CHAIN_KEYS[parts[0]] || parts[0],
+    dstChain: CHAIN_KEYS[parts[1]] || parts[1],
+  };
+}
+
+/**
+ * Returns whether a direction originates from an EVM chain.
+ */
+export function isEVMSource(direction: BridgeDirection): boolean {
+  return !direction.startsWith('solana') && !direction.startsWith('starknet');
+}
 
 interface TokenAddresses {
   solanaAddress: string;
@@ -153,21 +189,22 @@ export async function getBridgeQuote(
   apiKey: string,
   tokenSymbol: string = 'USDC',
 ): Promise<BridgeQuote> {
-  const addrs = await discoverTokenAddresses(tokenSymbol);
+  const { srcChain, dstChain } = resolveChainKeys(direction);
 
-  const srcChain = direction === 'solana_to_starknet' ? CHAIN_KEY_SOLANA : CHAIN_KEY_STARKNET;
-  const dstChain = direction === 'solana_to_starknet' ? CHAIN_KEY_STARKNET : CHAIN_KEY_SOLANA;
-  const srcTokenAddress = direction === 'solana_to_starknet'
-    ? addrs.solanaAddress
-    : addrs.starknetAddress;
-  const dstTokenAddress = direction === 'solana_to_starknet'
-    ? addrs.starknetAddress
-    : addrs.solanaAddress;
+  // Discover token addresses for src and dst chains
+  const allTokens = await discoverAllTokenAddresses(tokenSymbol);
+  const srcToken = allTokens.find(t => t.chainKey === srcChain);
+  const dstToken = allTokens.find(t => t.chainKey === dstChain);
 
-  // LayerZero Value Transfer API expects amounts in base units (smallest denomination)
-  const srcDecimals = direction === 'solana_to_starknet'
-    ? addrs.solanaDecimals
-    : addrs.starknetDecimals;
+  if (!srcToken || !dstToken) {
+    throw new Error(
+      `${tokenSymbol} not found on ${srcChain} and/or ${dstChain} via LayerZero Value Transfer API`,
+    );
+  }
+
+  const srcTokenAddress = srcToken.address;
+  const dstTokenAddress = dstToken.address;
+  const srcDecimals = srcToken.decimals;
   const amountBaseUnits = toBaseUnits(amount, srcDecimals);
 
   console.log(`[Bridge] Getting quote: ${tokenSymbol} ${srcChain} → ${dstChain}, amount=${amount} (${amountBaseUnits} base units, ${srcDecimals} decimals)`);
@@ -390,6 +427,124 @@ export async function checkBridgeStatus(
   } catch {
     return {status: 'pending'};
   }
+}
+
+/**
+ * Discovers token addresses across ALL supported chains from LayerZero.
+ * Returns an array of { chainKey, address, decimals } for the given token.
+ */
+interface TokenOnChain {
+  chainKey: string;
+  address: string;
+  decimals: number;
+}
+
+let allTokenCache: Record<string, TokenOnChain[]> = {};
+
+async function discoverAllTokenAddresses(tokenSymbol: string): Promise<TokenOnChain[]> {
+  if (allTokenCache[tokenSymbol]) return allTokenCache[tokenSymbol];
+
+  console.log(`[Bridge] Discovering ${tokenSymbol} addresses across all chains...`);
+  const response = await fetch(`${VT_API_BASE}/tokens`);
+  const { tokens } = await response.json();
+
+  const matches: TokenOnChain[] = tokens
+    .filter((t: any) => t.symbol === tokenSymbol && t.isSupported)
+    .map((t: any) => ({
+      chainKey: t.chainKey,
+      address: t.address,
+      decimals: t.decimals ?? 18,
+    }));
+
+  allTokenCache[tokenSymbol] = matches;
+  console.log(`[Bridge] Found ${tokenSymbol} on chains: ${matches.map((m: TokenOnChain) => m.chainKey).join(', ')}`);
+  return matches;
+}
+
+/**
+ * Returns all chains that support a given token via LayerZero.
+ */
+export async function getSupportedChainsForToken(tokenSymbol: string = 'USDC'): Promise<string[]> {
+  const tokens = await discoverAllTokenAddresses(tokenSymbol);
+  return tokens.map(t => t.chainKey);
+}
+
+/**
+ * Builds user steps for an EVM→Starknet bridge.
+ * Returns the raw transaction data that needs to be signed by an EVM wallet.
+ */
+export async function buildEVMBridgeSteps(
+  quoteId: string,
+  apiKey: string,
+): Promise<{
+  chainType: string;
+  transaction: any;
+}[]> {
+  const response = await fetch(`${VT_API_BASE}/build-user-steps`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ quoteId }),
+  });
+
+  const data = await response.json();
+  const steps = data.userSteps || [];
+
+  return steps
+    .filter((s: any) => s.type === 'TRANSACTION')
+    .map((s: any) => ({
+      chainType: s.chainType,
+      transaction: s.transaction,
+    }));
+}
+
+/**
+ * Executes an EVM→Starknet bridge using a Privy embedded wallet provider.
+ * Signs and sends the LayerZero transaction via the EVM provider.
+ */
+export async function bridgeEVMToStarknet(
+  quoteId: string,
+  evmProvider: any,
+  apiKey: string,
+): Promise<BridgeTransferResult> {
+  const steps = await buildEVMBridgeSteps(quoteId, apiKey);
+
+  let lastTxHash = '';
+
+  for (const step of steps) {
+    if (step.chainType !== 'EVM') continue;
+
+    const tx = step.transaction?.encoded || step.transaction;
+    if (!tx) continue;
+
+    // The Privy EVM provider implements EIP-1193
+    // Send the transaction via the provider
+    const txHash = await evmProvider.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        to: tx.to,
+        data: tx.data,
+        value: tx.value || '0x0',
+        ...(tx.gasLimit ? { gas: tx.gasLimit } : {}),
+      }],
+    });
+
+    lastTxHash = txHash;
+    console.log(`[Bridge] EVM tx sent: ${txHash}`);
+  }
+
+  if (!lastTxHash) {
+    throw new Error('No EVM transaction steps found in the quote');
+  }
+
+  return {
+    quoteId,
+    txHash: lastTxHash,
+    status: 'pending',
+    estimatedArrival: new Date(Date.now() + 5 * 60 * 1000),
+  };
 }
 
 export function getLayerZeroScanLink(txHash: string): string {

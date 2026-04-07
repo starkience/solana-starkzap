@@ -97,7 +97,7 @@ export function useAuth() {
               address: info.address,
               username: initialUsername
             }));
-            navigation.navigate('MainTabs');
+            navigation.navigate('Dashboard');
           },
         });
       } catch (error) {
@@ -152,7 +152,7 @@ export function useAuth() {
               address: info.address,
               username: initialUsername
             }));
-            navigation.navigate('MainTabs');
+            navigation.navigate('Dashboard');
           },
         });
       } catch (error) {
@@ -190,7 +190,7 @@ export function useAuth() {
                 username: initialUsername
               }));
               
-              navigation.navigate('MainTabs');
+              navigation.navigate('Dashboard');
             },
           });
         } else {
@@ -537,7 +537,7 @@ export function useAuth() {
         address: info.address,
         username: initialUsername
       }));
-      navigation.navigate('MainTabs');
+      navigation.navigate('Dashboard');
     }, [dispatch, navigation]);
 
     const loginWithEmail = useCallback(async () => {
@@ -703,7 +703,7 @@ export function useAuth() {
               address: info.address,
               username: initialUsername
             }));
-            navigation.navigate('MainTabs');
+            navigation.navigate('Dashboard');
             return { address: info.address };
           }
         });
@@ -729,7 +729,7 @@ export function useAuth() {
               address: info.address,
               username: initialUsername
             }));
-            navigation.navigate('MainTabs');
+            navigation.navigate('Dashboard');
             return { address: info.address };
           }
         });
@@ -746,7 +746,7 @@ export function useAuth() {
           setStatusMessage: () => {},
           onSuccess: (info) => {
             dispatch(loginSuccess({provider: 'turnkey', address: info.address}));
-            navigation.navigate('MainTabs');
+            navigation.navigate('Dashboard');
           }
         });
       } catch (error) {
@@ -763,7 +763,7 @@ export function useAuth() {
           setStatusMessage: () => {},
           onWalletConnected: (info) => {
             dispatch(loginSuccess({provider: 'turnkey', address: info.address}));
-            navigation.navigate('MainTabs');
+            navigation.navigate('Dashboard');
           }
         });
       } catch (error) {

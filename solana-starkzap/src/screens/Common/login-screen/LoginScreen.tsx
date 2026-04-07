@@ -123,7 +123,7 @@ export default function LoginScreen() {
     setTimeout(() => {
       navigation.reset({
         index: 0,
-        routes: [{ name: 'MainTabs' }],
+        routes: [{ name: 'Dashboard' }],
       });
     }, 0);
   }
@@ -132,7 +132,7 @@ export default function LoginScreen() {
     if (isLoggedIn) {
       navigation.reset({
         index: 0,
-        routes: [{ name: 'MainTabs' }],
+        routes: [{ name: 'Dashboard' }],
       });
     }
   }, [isLoggedIn, navigation]);

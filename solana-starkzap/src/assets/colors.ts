@@ -3,31 +3,36 @@ const COLORS = {
   white: '#FFFFFF',
   black: '#000000',
 
-  // App backgrounds — Jupiter dark teal theme
-  background: '#0B1A2B',
-  secondaryBackground: '#0F2233',
-  cardBackground: '#132C40',
-  surfaceBackground: '#0B1A2B',
+  // App backgrounds — Axal light theme
+  background: '#FFFFFF',
+  secondaryBackground: '#F8F9FA',
+  cardBackground: '#FFFFFF',
+  surfaceBackground: '#F2F4F5',
 
-  // Brand — Jupiter teal/cyan
-  brandPrimary: '#00C2B0',
-  brandPrimaryLight: 'rgba(0, 194, 176, 0.12)',
-  brandPrimaryMuted: 'rgba(0, 194, 176, 0.20)',
+  // Brand — Axal green
+  brandPrimary: '#00E676',
+  brandPrimaryLight: 'rgba(0, 230, 118, 0.12)',
+  brandPrimaryMuted: 'rgba(0, 230, 118, 0.20)',
+
+  // BTC Earn — orange accent
+  btcOrange: '#FF9500',
+  btcOrangeLight: 'rgba(255, 149, 0, 0.12)',
+  btcOrangeMuted: 'rgba(255, 149, 0, 0.20)',
 
   // Grays
-  greyLight: 'rgba(255, 255, 255, 0.06)',
-  greyMid: '#8B9BB4',
-  greyDark: '#5A6B80',
-  greyBorder: 'rgba(255, 255, 255, 0.08)',
-  greyBorderdark: 'rgba(255, 255, 255, 0.12)',
-  lightGrey: 'rgba(255, 255, 255, 0.04)',
+  greyLight: 'rgba(0, 0, 0, 0.04)',
+  greyMid: '#6B7280',
+  greyDark: '#9CA3AF',
+  greyBorder: 'rgba(0, 0, 0, 0.08)',
+  greyBorderdark: 'rgba(0, 0, 0, 0.12)',
+  lightGrey: 'rgba(0, 0, 0, 0.03)',
 
   // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#8B9BB4',
-  textLight: '#5A6B80',
-  textHint: '#8B9BB4',
-  textDark: '#FFFFFF',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#6B7280',
+  textLight: '#9CA3AF',
+  textHint: '#9CA3AF',
+  textDark: '#1A1A1A',
 
   // Status
   positiveGreen: '#22C55E',
@@ -35,7 +40,7 @@ const COLORS = {
   errorRed: '#EF4444',
   warningOrange: '#F97316',
 
-  // Trading — Jupiter Long/Short
+  // Trading — kept for compatibility
   longGreen: '#22C55E',
   shortRed: '#EF4444',
   longBg: 'rgba(34, 197, 94, 0.15)',
@@ -47,20 +52,20 @@ const COLORS = {
   brandBlue: '#3B82F6',
   brandPink: '#F53987',
   brandGreen: '#22C55E',
-  cyan: '#00C2B0',
-  lightBackground: '#0F2233',
-  lighterBackground: '#132C40',
-  darkerBackground: '#080F1A',
-  cardBackgroundLight: '#132C40',
-  accessoryDarkColor: '#8B9BB4',
-  borderDarkColor: 'rgba(255, 255, 255, 0.08)',
-  textDarkColor: '#FFFFFF',
+  cyan: '#00E676',
+  lightBackground: '#F8F9FA',
+  lighterBackground: '#F2F4F5',
+  darkerBackground: '#E8EAED',
+  cardBackgroundLight: '#FFFFFF',
+  accessoryDarkColor: '#6B7280',
+  borderDarkColor: 'rgba(0, 0, 0, 0.08)',
+  textDarkColor: '#1A1A1A',
 
-  // Gradients — Jupiter teal gradient
-  gradientTealStart: '#0B1A2B',
-  gradientTealEnd: '#0D2A3E',
-  gradientAccentStart: '#00C2B0',
-  gradientAccentEnd: '#00A896',
+  // Gradients — Axal light gradient
+  gradientTealStart: '#FFFFFF',
+  gradientTealEnd: '#F2F4F5',
+  gradientAccentStart: '#00E676',
+  gradientAccentEnd: '#00C853',
 };
 
 export default COLORS;

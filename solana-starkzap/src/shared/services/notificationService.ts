@@ -407,7 +407,7 @@ class NotificationService {
         to: this.expoPushToken,
         title,
         body,
-        data: data || { screen: 'MainTabs' },
+        data: data || { screen: 'Dashboard' },
         sound: 'default',
         priority: 'high',
         channelId: Platform.OS === 'android' ? 'default' : undefined,

@@ -19,7 +19,7 @@ export default function IntroScreen() {
       setIsCheckingAuth(true);
 
       if (isLoggedIn) {
-        navigation.navigate('MainTabs' as never);
+        navigation.navigate('Dashboard' as never);
         setIsCheckingAuth(false);
         return;
       }
@@ -29,7 +29,7 @@ export default function IntroScreen() {
         const authUser = client?.auth?.authenticatedUser;
 
         if (authUser) {
-          navigation.navigate('MainTabs' as never);
+          navigation.navigate('Dashboard' as never);
           setIsCheckingAuth(false);
         } else {
           setTimeout(() => {
